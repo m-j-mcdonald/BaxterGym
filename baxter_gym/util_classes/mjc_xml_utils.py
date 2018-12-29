@@ -1,6 +1,6 @@
+import baxter_gym
 import xml.etree.ElementTree as xml
 
-import baxter_gym
 
 MUJOCO_MODEL_Z_OFFSET = -0.665 # -0.706
 

@@ -1,6 +1,6 @@
 import numpy as np
 from math import cos, sin, atan2
-from errors_exceptions import OpenRAVEException
+from baxter_gym.util_classes.errors_exceptions import OpenRAVEException
 from openravepy import quatFromAxisAngle, matrixFromPose, poseFromMatrix, \
 axisAngleFromRotationMatrix, KinBody, GeometryType, RaveCreateRobot, \
 RaveCreateKinBody, TriMesh, Environment, DOFAffine, IkParameterization, IkParameterizationType, \
