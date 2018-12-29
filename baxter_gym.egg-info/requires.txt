@@ -1,3 +1,5 @@
-gym
-openravepy
 dm_control
+gym
+numpy
+matplotlib
+openravepy

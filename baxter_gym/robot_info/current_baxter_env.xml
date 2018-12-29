@@ -258,7 +258,7 @@
         </body>
       </body>
     </body>
-    <body euler="0 0 0" name="table" pos="0.5 0 -0.4375">
+    <body euler="0 0 0" name="table" pos="0.5 0 -0.4875">
       <geom name="table" size="0.5 0.75 0.4375" type="box" />
     </body>
   <body name="B0_0" pos="0.5 -0.2 0.0">
@@ -296,4 +296,4 @@
 
 </actuator>
 
-<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterEnv/baxter_gym/robot_info/" strippath="false" /></mujoco>
+<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/robot_info/" strippath="false" /></mujoco>

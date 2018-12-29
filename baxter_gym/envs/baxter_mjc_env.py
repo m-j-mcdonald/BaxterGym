@@ -77,7 +77,7 @@ MJC_TIME_DELTA = 0.002
 MJC_DELTAS_PER_STEP = int(1. // MJC_TIME_DELTA)
 N_CONTACT_LIMIT = 12
 
-START_EE = [0.6, -0.5, 0.75, 0, 0, 1, 0, 0.6, 0.5, 0.75, 0, 0, 1, 0]
+START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 
 
@@ -118,7 +118,7 @@ class BaxterMJCEnv(object):
                 self._obs_inds['image'] = (ind, ind+6)
                 ind += 6
 
-        self.observation_space = spaces.Box(shape=(ind,))
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(ind,), dtype='float32')
 
 
         self.ctrl_data = {}
@@ -641,11 +641,11 @@ class BaxterMJCEnv(object):
         jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
 
         if use_right:
-            if jnt_cmd is None or np.max(np.abs(jnt_cmd - arm_jnts[:7])) > 0.5:
+            if jnt_cmd is None:
                 print 'Cannot complete action; ik will cause unstable control'
                 return arm_jnts[:7]
         else:
-            if jnt_cmd is None or np.max(np.abs(jnt_cmd - arm_jnts[7:])) > 0.5:
+            if jnt_cmd is None:
                 print 'Cannot complete action; ik will cause unstable control'
                 return arm_jnts[7:]
 
@@ -680,8 +680,10 @@ class BaxterMJCEnv(object):
             cur_left_ee_rot = self.get_left_ee_rot()
 
             target_right_ee_pos = cur_right_ee_pos + action[:3]
+            target_right_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_right_ee_rot = action[3:7] # cur_right_ee_rot + action[3:7]
             target_left_ee_pos = cur_left_ee_pos + action[8:11]
+            target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_left_ee_rot = action[11:15] # cur_left_ee_rot + action[11:15]
 
             # target_right_ee_rot /= np.linalg.norm(target_right_ee_rot)
@@ -708,9 +710,11 @@ class BaxterMJCEnv(object):
             cur_left_ee_pos = self.get_left_ee_pos()
 
             target_right_ee_pos = cur_right_ee_pos + action[:3]
-            target_right_ee_rot = self.get_right_ee_rot()
+            target_right_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            target_right_ee_rot = START_EE[3:7]
             target_left_ee_pos = cur_left_ee_pos + action[4:7]
-            target_left_ee_rot = self.get_left_ee_rot()
+            target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            target_left_ee_rot = START_EE[10:14]
 
             start_t = time.time()
             right_cmd = self._calc_ik(target_right_ee_pos, 
