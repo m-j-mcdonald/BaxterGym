@@ -640,6 +640,15 @@ class BaxterMJCEnv(object):
 
         jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
 
+        if use_right:
+            if jnt_cmd is None or np.max(np.abs(jnt_cmd - arm_jnts[:7])) > 0.5:
+                print 'Cannot complete action; ik will cause unstable control'
+                return arm_jnts[:7]
+        else:
+            if jnt_cmd is None or np.max(np.abs(jnt_cmd - arm_jnts[7:])) > 0.5:
+                print 'Cannot complete action; ik will cause unstable control'
+                return arm_jnts[7:]
+
         return jnt_cmd
 
 
@@ -688,11 +697,6 @@ class BaxterMJCEnv(object):
                                      use_right=False)
             # print 'IK time:', time.time() - start_t
 
-            if right_cmd is None:
-                right_cmd = self.get_arm_joint_angles()[:7]
-            if left_cmd is None:
-                left_cmd = self.get_arm_joint_angles()[7:]
-
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
             r_grip = action[7]
@@ -717,11 +721,6 @@ class BaxterMJCEnv(object):
                                      target_left_ee_rot, 
                                      use_right=False)
             # print 'IK time:', time.time() - start_t
-
-            if right_cmd is None:
-                right_cmd = self.get_arm_joint_angles()[:7]
-            if left_cmd is None:
-                left_cmd = self.get_arm_joint_angles()[7:]
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
@@ -757,9 +756,6 @@ class BaxterMJCEnv(object):
             self.physics.set_control(cmd)
             self.physics.step()
         # print 'Step time:', time.time() - start_t
-
-        # if self._cloth_present:
-        #     self.activate_cloth_eq()
 
         if debug:
             print '\n'
