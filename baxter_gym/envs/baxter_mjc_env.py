@@ -18,6 +18,8 @@ from dm_control.viewer import util
 from dm_control.viewer import viewer
 from dm_control.viewer import views
 
+from gym import spaces
+
 import baxter_gym
 from baxter_gym.util_classes.openrave_body import OpenRAVEBody
 from baxter_gym.robot_info.robots import Baxter
@@ -115,6 +117,8 @@ class BaxterMJCEnv(object):
             if item in obs_include or not len(obs_include):
                 self._obs_inds['image'] = (ind, ind+6)
                 ind += 6
+
+        self.observation_space = spaces.Box(shape=(ind,))
 
 
         self.ctrl_data = {}
