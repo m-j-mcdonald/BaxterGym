@@ -89,7 +89,7 @@ class BaxterMJCEnv(object):
         self.prev_time = 0.
 
         self.use_viewer = view
-        self.use_glew = os.environ['MUJOCO_GL'] != 'osmesa'
+        self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
         self.obs_include = obs_include
         self._obs_inds = {}
         self._joint_map_cache = {}
