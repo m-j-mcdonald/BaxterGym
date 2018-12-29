@@ -1,0 +1,1 @@
+from baxter_gym.envs.baxter_cloth_env import BaxterContinuousClothEnv, BaxterDiscreteClothEnv
