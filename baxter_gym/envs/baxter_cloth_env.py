@@ -17,6 +17,11 @@ class BaxterContinuousClothEnv(BaxterMJCEnv):
                                                        obs_include=obs_include,
                                                        view=True)
 
+    def reset():
+        self.randomize_cloth()
+        super(BaxterContinuousClothEnv, self).reset()
+
+
 
 class BaxterDiscreteClothEnv(BaxterMJCEnv):
     def __init__(self):
@@ -33,3 +38,7 @@ class BaxterDiscreteClothEnv(BaxterMJCEnv):
                                                      cloth_info=cloth_info, 
                                                      obs_include=obs_include, 
                                                      view=True)
+
+    def reset():
+        self.randomize_cloth()
+        super(BaxterDiscreteClothEnv, self).reset()

@@ -886,9 +886,7 @@ class BaxterMJCEnv(object):
 
     def reset(self):
         self.physics.reset()
-        if self._viewer is not None:
-            self._reload_viewer()
-
+        self._reload_viewer()
         self.ctrl_data = {}
         self.cur_time = 0.
         self.prev_time = 0.
