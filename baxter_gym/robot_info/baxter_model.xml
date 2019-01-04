@@ -351,7 +351,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
       </body>
     </body>
     <body name="table" pos="0.5 0.0 -0.4875" euler="0 0 0">
-      <geom name="table" type="box" size="0.5 0.75 0.4375" rgba="0 0.5 0 1" />
+      <geom name="table" type="box" size="1 1.5 0.4375" rgba="0 0.5 0 1" />
     </body>
   </worldbody>
 

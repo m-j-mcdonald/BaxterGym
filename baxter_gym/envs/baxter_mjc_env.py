@@ -681,10 +681,8 @@ class BaxterMJCEnv(object):
                 #     self.physics.model.eq_active[l_eq_ind] = False
 
 
-    def _shift_cloth_to_grip(self, ee_pos, point_xy):
-        point_pos = self.get_cloth_point(point_xy[0], point_xy[1])
-        cloth_disp = ee_pos - point_pos
-        self.physics.data.qpos[19:22] += cloth_disp
+    def _shift_cloth(self, x, y, z):
+        self.physics.data.qpos[19:22] += (x, y, z)
         self.physics.forward()
 
 
@@ -994,6 +992,29 @@ class BaxterMJCEnv(object):
 
     def seed(self, seed=None):
         pass
+
+
+    def randomize_cloth(self, x_bounds=(-0.15, 0.25), y_bounds=(-0.7, 1.1)):
+        if not self._cloth_present:
+            raise AttributeError('This environment does not contain a cloth.')
+
+        n_folds = np.random.randint(3, 15)
+        inds = np.random.choice(range(26, 54), n_folds)
+        for i in inds:
+            self.physics.data.qpos[i] = np.random.uniform(-1, 1)
+        self.physics.forward()
+
+        x = np.random.uniform(x_bounds[0], x_bounds[1])
+        y = np.random.uniform(y_bounds[0],y_bounds[1])
+        z = np.random.uniform(0, 0.025)
+        self._shift_cloth(x, y, z)
+
+        jnt_angles = self.get_joint_angles()
+        for _ in range(5):
+            self.physics.step()
+
+        self.physics.data.qpos[1:19] = jnt_angles
+        self.physics.forward()
 
 
     def list_joint_info(self):
