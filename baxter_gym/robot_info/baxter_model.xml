@@ -63,7 +63,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
   </equality>
 
   <worldbody>
-    <light directional="false" cutoff="90" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5"/>
+    <light directional="false" cutoff="90" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5" ambient="0 0 0"/>
     <geom name="ground" type="plane" pos="0 0 -0.925" size="4 4 .05" rgba="0.7 0.6 0.5 1"/>
     <camera name="overhead_cam" pos="0.5 0.0 1.25" quat="0.707 0 0 -0.707" />
     <camera name="forward_cam" pos="2 0.0 0.1" quat="0.5 0.5 0.5 0.5" />
@@ -158,6 +158,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                               <geom type="box" class="viz" size="0.005 0.005 0.005" rgba="0 0 0 1" pos="0 0 0" />
                           </body>-->
                           <body name="right_gripper_base" pos="0 0 0.025">
+                            <camera name="right_camera" pos="-0.025 0.0 0.02" euler="0 -3.14 1.57" />
                             <inertial pos="0 0 0" quat="-0.5 0.5 0.5 0.5" mass="0.3" diaginertia="3e-08 2e-08 2e-08" />
                             <geom quat="0 0 0.707107 0.707107" class="viz" mesh="electric_gripper_base" />
                             <geom size="0.029 0.05" quat="0 0 0.707107 0.707107" type="cylinder" />
@@ -198,7 +199,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                                 <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
                                 <geom pos="-.007 -.01 0.003" class="viz" mesh="half_round_tip" euler="-1.57 0 0"/>
                                 <!-- <geom size="0.008 0.0185" pos="0 -0.0045 -0.015" quat="0 0 0 1" type="cylinder" /> -->
-                                <geom size="0.02 0.01 0.025" pos="0 -0.0045 -0.015" quat="0 0 0 1" type="box" />
+                                <geom size="0.02 0.01 0.025" pos="0 -0.0045 -0.015" quat="0 0 0 1" type="box" rgba="0 0 0 0" />
                               </body>
                             </body>
                             <body name="right_gripper_r_finger" pos="0 0.0015 0.02">
@@ -211,7 +212,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                                 <inertial pos="0 0 0" mass="0.01" diaginertia="0.01 0.01 0.01" />
                                 <geom pos=".007 .01 0.003" class="viz" mesh="half_round_tip" euler="-1.57 3.14 0"/>
                                 <!-- <geom size="0.008 0.0185" pos="0 0.0045 -0.015" type="cylinder" /> -->
-                                <geom size="0.02 0.01 0.025" pos="0 0.0045 -0.015" quat="0 0 0 1" type="box" />
+                                <geom size="0.02 0.01 0.025" pos="0 0.0045 -0.015" quat="0 0 0 1" type="box" rgba="0 0 0 0" />
                               </body>
                             </body>
                           </body>
@@ -282,6 +283,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                               <geom type="box" class="viz" size="0.005 0.005 0.005" rgba="0 0 0 1" pos="0 0 0" />
                           </body>-->
                           <body name="left_gripper_base" pos="0 0 0.025">
+                            <camera name="left_camera" pos="-0.025 0.0 0.02" euler="0 -3.14 1.57" />
                             <inertial pos="0 0 0" quat="-0.5 0.5 0.5 0.5" mass="0.3" diaginertia="3e-08 2e-08 2e-08" />
                             <geom quat="0 0 0.707107 0.707107" class="viz" mesh="electric_gripper_base" />
                             <geom size="0.029 0.05" quat="0 0 0.707107 0.707107" type="cylinder" />
@@ -321,7 +323,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                                 <body name="left_gripper_l_finger_tip" pos="0 0.01725 0.1127">
                                     <inertial pos="0 0 0" quat="0 0 0 1" mass="0.01" diaginertia="0.01 0.01 0.01" />
                                     <geom class="viz" pos="-.02 -.009 0.003" mesh="paddle_tip" euler="-1.57 0 0"/>
-                                    <geom size="0.02 0.01 0.025" pos="0 -0.0045 -0.015" quat="0 0 0 1" type="box" />
+                                    <geom size="0.02 0.01 0.025" pos="0 -0.0045 -0.015" quat="0 0 0 1" type="box" rgba="0 0 0 0" />
                                 </body>
                             </body>
                             <body name="left_gripper_r_finger" pos="0 0.0015 0.02">
@@ -333,7 +335,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                                 <body name="left_gripper_r_finger_tip" pos="0 -0.01725 0.1127">
                                     <inertial pos="0 0 0" mass="0.01" diaginertia="0.01 0.01 0.01" />
                                     <geom pos=".02 .009 0.003" class="viz" mesh="paddle_tip" euler="-1.57 3.14 0"/>
-                                    <geom size="0.02 0.01 0.025" pos="0 0.0045 -0.015" quat="0 0 0 1" type="box" />
+                                    <geom size="0.02 0.01 0.025" pos="0 0.0045 -0.015" quat="0 0 0 1" type="box" rgba="0 0 0 0" />
                                 </body>
                             </body> 
                           </body>
@@ -348,8 +350,8 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
         </body>
       </body>
     </body>
-    <body name="table" pos="0.5 0 -0.4875" euler="0 0 0">
-      <geom name="table" type="box" size="0.5 0.75 0.4375" />
+    <body name="table" pos="0.5 0.0 -0.4875" euler="0 0 0">
+      <geom name="table" type="box" size="0.5 0.75 0.4375" rgba="0 0.5 0 1" />
     </body>
   </worldbody>
 

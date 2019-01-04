@@ -10,7 +10,12 @@ class BaxterContinuousClothEnv(BaxterMJCEnv):
                                      cloth_info['spacing'], 
                                      cloth_info['radius'],
                                      (0.5, -0.2, 0.0))
-        super(BaxterContinuousClothEnv, self).__init__(mode='end_effector_pos', items=[cloth], cloth_info=cloth_info, view=True)
+        obs_include = set(['end_effector', 'overhead_image', 'cloth_points'])
+        super(BaxterContinuousClothEnv, self).__init__(mode='end_effector_pos', 
+                                                       items=[cloth], 
+                                                       cloth_info=cloth_info, 
+                                                       obs_include=obs_include,
+                                                       view=True)
 
 
 class BaxterDiscreteClothEnv(BaxterMJCEnv):
@@ -22,4 +27,9 @@ class BaxterDiscreteClothEnv(BaxterMJCEnv):
                                      cloth_info['spacing'], 
                                      cloth_info['radius'],
                                      (0.5, -0.2, 0.0))
-        super(BaxterDiscreteClothEnv, self).__init__(mode='discrete_pos', items=[cloth], cloth_info=cloth_info, view=True)
+        obs_include = set(['end_effector', 'overhead_image', 'cloth_points'])
+        super(BaxterDiscreteClothEnv, self).__init__(mode='discrete_pos', 
+                                                     items=[cloth], 
+                                                     cloth_info=cloth_info, 
+                                                     obs_include=obs_include, 
+                                                     view=True)

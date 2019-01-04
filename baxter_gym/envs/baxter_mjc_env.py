@@ -8,6 +8,8 @@ from threading import Thread
 import time
 import xml.etree.ElementTree as xml
 
+from tkinter import TclError
+
 from dm_control import render
 from dm_control.mujoco import Physics
 from dm_control.viewer import gui
@@ -27,7 +29,7 @@ from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
 
 
-BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_cloth_model.xml'
+BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_model.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
 
 
@@ -45,6 +47,8 @@ TWO_GRASP = 6
 HALF_WIDTH_GRASP = 7
 HALF_LENGTH_GRASP = 8
 TWIST_FOLD = 9
+RIGHT_REACHABLE = 10
+LEFT_REACHABLE = 11
 
 BAXTER_GAINS = {
     'left_s0': (5000., 0.01, 2.5),
@@ -82,7 +86,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 
 
 class BaxterMJCEnv(object):
-    def __init__(self, mode='end_effector', obs_include=[], items=[], cloth_info=None, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], cloth_info=None, im_dims=(_CAM_WIDTH, _CAM_HEIGHT), view=False):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -93,7 +97,6 @@ class BaxterMJCEnv(object):
         self.use_viewer = view
         self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
         self.obs_include = obs_include
-        self._obs_inds = {}
         self._joint_map_cache = {}
         self._ind_cache = {}
         self._cloth_present = True
@@ -103,23 +106,9 @@ class BaxterMJCEnv(object):
             self.cloth_sphere_radius = cloth_info['radius']
             self.cloth_spacing = cloth_info['spacing']
 
-        ind = 0
-        if 'image' in obs_include or not len(obs_include):
-            self._obs_inds['image'] = (ind, ind+_CAM_WIDTH*_CAM_HEIGHT)
-            ind += _CAM_WIDTH*_CAM_HEIGHT
-        if 'joints' in obs_include or not len(obs_include):
-            self._obs_inds['joints'] = (ind, ind+18)
-            ind += 18
-        if 'end_effector' in obs_include or not len(obs_include):
-            self._obs_inds['end_effector'] = (ind, ind+12)
-            ind += 12
-        for item, xml, info in items:
-            if item in obs_include or not len(obs_include):
-                self._obs_inds['image'] = (ind, ind+6)
-                ind += 6
-
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(ind,), dtype='float32')
-
+        self.im_wid, self.im_height = im_dims
+        self.items = items
+        self._set_obs_info(obs_include)
 
         self.ctrl_data = {}
         for joint in BAXTER_GAINS:
@@ -139,7 +128,6 @@ class BaxterMJCEnv(object):
                 'ci': 0.,
             }
 
-        self.items = items
         self._load_model()
 
         env = openravepy.Environment()
@@ -224,37 +212,123 @@ class BaxterMJCEnv(object):
 
 
     def _launch_matplot_view(self):
-        self._matplot_im = plt.imshow(self.render(view=False))
-        plt.show()
+        try:
+            self._matplot_im = plt.imshow(self.render(view=False))
+            plt.show()
+        except TclError:
+            print '\nCould not find display to launch viewer (this does not affect the ability to render images)\n'
+
+
+    def _set_obs_info(self, obs_include):
+        self._obs_inds = {}
+        self._obs_shape = {}
+        ind = 0
+        if 'overhead_image' in obs_include or not len(obs_include):
+            self._obs_inds['overhead_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['overhead_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'right_image' in obs_include or not len(obs_include):
+            self._obs_inds['right_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['right_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'left_image' in obs_include or not len(obs_include):
+            self._obs_inds['left_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['left_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'joints' in obs_include or not len(obs_include):
+            self._obs_inds['joints'] = (ind, ind+18)
+            self._obs_shape['joints'] = (18,)
+            ind += 18
+
+        if 'end_effector' in obs_include or not len(obs_include):
+            self._obs_inds['end_effector'] = (ind, ind+16)
+            self._obs_shape['end_effector'] = (16,)
+            ind += 16
+
+        if self._cloth_present and ('cloth_points' in obs_include or not len(obs_include)):
+            n_pts = self.cloth_width * self.cloth_length
+            self._obs_inds['cloth_points'] = (ind, ind+3*n_pts)
+            self._obs_shape['cloth_points'] = (self.cloth_width*self.cloth_length, 3)
+            ind += 3*n_pts
+
+        for item, xml, info in self.items:
+            if item in obs_include or not len(obs_include):
+                self._obs_inds[item] = (ind, ind+3) # Only store 3d Position
+                self._obs_shape[item] = (3,)
+                ind += 3
+
+        self.dO = ind
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(ind,), dtype='float32')
 
 
     def get_obs(self):
-        obs = []
+        obs = np.zeros(self.dO)
 
-        # if not len(self.obs_include) or 'image' in self.obs_include:
-        #     pixels = self.render(view=False)
-        #     obs.extend(pixels.flatten())
+        if not len(self.obs_include) or 'overhead_image' in self.obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
+            inds = self._obs_inds['overhead_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(self.obs_include) or 'right_image' in self.obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=2, view=False)
+            inds = self._obs_inds['right_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(self.obs_include) or 'left_image' in self.obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=3, view=False)
+            inds = self._obs_inds['left_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
 
         if not len(self.obs_include) or 'joints' in self.obs_include:
             jnts = self.get_joint_angles()
-            obs.extend(jnts)
+            inds = self._obs_inds['joints']
+            obs[inds[0]:inds[1]] = jnts
 
         if not len(self.obs_include) or 'end_effector' in self.obs_include:
-            obs.extend(self.get_left_ee_pos())
-            obs.extend(self.get_left_ee_rot())
-            obs.extend(self.get_right_ee_pos())
-            obs.extend(self.get_right_ee_rot())
+            grip_jnts = self.get_gripper_joint_angles()
+            inds = self._obs_inds['end_effector']
+            obs[inds[0]:inds[1]] = np.r_[self.get_right_ee_pos(), 
+                                         self.get_right_ee_rot(),
+                                         grip_jnts[0],
+                                         self.get_left_ee_pos(),
+                                         self.get_left_ee_rot(),
+                                         grip_jnts[1]]
+
+        if self._cloth_present and (not len(self.obs_include) or 'cloth_points' in self.obs_include):
+            inds = self._obs_inds['cloth_points']
+            obs[inds[0]:inds[1]] = self.get_cloth_points().flatten()
 
         for item in self.items:
             if not len(self.obs_include) or item[0] in self.obs_include:
-                obs.extend(self.get_item_pose(item[0]))
-                obs.extend(self.get_item_rot(item[0]))
+                inds = self._obs_inds[item[0]]
+                obs[inds[0]:inds[1]] = self.get_item_pose(item[0])
 
         return np.array(obs)
 
 
+    def get_obs_types(self):
+        return self._obs_inds.keys()
+
+
     def get_obs_inds(self, obs_type):
+        if obs_type not in self._obs_inds:
+            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
         return self._obs_inds[obs_type]
+
+
+    def get_obs_shape(self, obs_type):
+        if obs_type not in self._obs_inds:
+            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
+        return self._obsshape[obs_type]
+
+
+    def get_obs_data(self, obs, obs_type):
+        if obs_type not in self._obs_inds:
+            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
+        return obs[self._obs_inds[obs_type]], self._obs_shape[obs_type]
 
 
     def get_arm_section_inds(self, section_name):
@@ -333,11 +407,30 @@ class BaxterMJCEnv(object):
         return self.physics.data.xpos[point_ind]
 
 
+    def get_leftmost_cloth_point(self):
+        # "Leftmost" along the y-axis
+        return max(self.get_cloth_points(), key=lambda p: p[1])
+
+
+    def get_rightmost_cloth_point(self):
+        # "Rightmost" along the y-axis
+        return max(self.get_cloth_points(), key=lambda p: -p[1])
+
+
+    def get_uppermost_cloth_point(self):
+        # "Uppermost" along the x-axis
+        return max(self.get_cloth_points(), key=lambda p: p[0])
+
+
+    def get_lowermost_cloth_point(self):
+        # "Lowermost" along the x-axis
+        return max(self.get_cloth_points(), key=lambda p: -p[0])
+
+
     def get_cloth_points(self):
         if not self._cloth_present:
             raise AttributeError('No cloth in model (remember to supply cloth_info).')
 
-        if not self._cloth_present: return []
         points_inds = []
         model = self.physics.model
         for x in range(self.cloth_length):
@@ -348,7 +441,7 @@ class BaxterMJCEnv(object):
 
 
     def get_joint_angles(self):
-        return self.physics.data.qpos[1:].copy()
+        return self.physics.data.qpos[1:19].copy()
 
 
     def get_arm_joint_angles(self):
@@ -747,7 +840,10 @@ class BaxterMJCEnv(object):
             if action == 12: return self.move_left_gripper_right()
             if action == 13: return self.move_left_gripper_up()
             if action == 14: return self.move_left_gripper_down()
-            return self.get_obs(), self.compute_reward(), False, {}
+            return self.get_obs(), \
+                   self.compute_reward(), \
+                   False, \
+                   {}
 
         start_t = time.time()
         for t in range(MJC_DELTAS_PER_STEP / 4):
@@ -772,7 +868,10 @@ class BaxterMJCEnv(object):
             corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
             print 'Cloth corners:', corner1, corner2, corner3, corner4
 
-        return self.get_obs(), self.compute_reward(), False, {}
+        return self.get_obs(), \
+               self.compute_reward(), \
+               False, \
+               {}
 
 
     def render(self, height=_CAM_HEIGHT, width=_CAM_WIDTH, camera_id=0, overlays=(),
@@ -1106,8 +1205,6 @@ class BaxterMJCEnv(object):
         corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
         corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
 
-        corners = [corner1, corner2, corner3, corner4]
-
         ee_left_pos = self.get_left_ee_pos()
         ee_right_pos = self.get_right_ee_pos()
         grips = self.get_gripper_joint_angles()
@@ -1119,5 +1216,8 @@ class BaxterMJCEnv(object):
         check4 = np.linalg.norm(ee_left_pos - corner2) < 0.02 and grips[1] < 0.04 and np.linalg.norm(ee_right_pos - corner4) < 0.02 and grips[0] < 0.04
 
         if check1 or check2 or check3 or check4: state.append(LENGTH_GRASP)
+
+        if any(map(lambda c: c[1] < 0, corners)): state.append(RIGHT_REACHABLE)
+        if any(map(lambda c: c[1] > 0, corners)): state.append(LEFT_REACHABLE)
 
         return state
