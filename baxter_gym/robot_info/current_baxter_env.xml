@@ -20,7 +20,7 @@
     <mesh file="meshes/electric_gripper/electric_gripper_base.STL" name="electric_gripper_base" />
     <mesh file="meshes/electric_gripper/fingers/extended_narrow.STL" name="extended_narrow" />
     
-  </asset>
+  <texture file="cloth_3.png" name="cloth" type="2d" /><material name="cloth" shininess="0.25" texture="cloth" /></asset>
 
   <visual>
     <map fogend="3" fogstart="1.5" />
@@ -267,7 +267,7 @@
                     <freejoint />
                     <composite count="3 5 1" flatinertia="0.01" spacing="0.1" type="cloth">
                         <joint armature="0.01" kind="main" />
-                        <skin inflate="0.005" subgrid="2" texcoord="true" />
+                        <skin inflate="0.005" material="cloth" subgrid="3" texcoord="true" />
                         <geom mass="0.005" size="0.01" type="sphere" />
                     </composite>
                 </body></worldbody>
@@ -298,4 +298,4 @@
 
 </actuator>
 
-<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/robot_info/" strippath="false" /></mujoco>
+<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/robot_info/" strippath="false" texturedir="textures/" /></mujoco>

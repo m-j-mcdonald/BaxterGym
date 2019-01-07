@@ -68,15 +68,20 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
                     <freejoint />
                     <composite type="cloth" count="{3} {4} 1" spacing="{5}" flatinertia="0.01">
                         <joint kind="main" armature="0.01"/>
-                        <skin texcoord="true" inflate="0.005" subgrid="2"/>
+                        <skin material="cloth" texcoord="true" inflate="0.005" subgrid="3" />
                         <geom type="sphere" size="{6}" mass="0.005"/>
                     </composite>
                 </body>\n
                 '''.format(pos[0], pos[1], pos[2], length, width, spacing, radius)
 
     xml_body = xml.fromstring(body)
+    texture = '<texture name="cloth" type="2d" file="cloth_3.png" />'
+    xml_texture = xml.fromstring(texture)
 
-    return 'B0_0', xml_body, {}
+    material = '<material name="cloth" texture="cloth" shininess="0.25" />'
+    xml_material = xml.fromstring(material)
+
+    return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
 
 
 
@@ -88,7 +93,7 @@ def generate_xml(base_file, target_file, items):
     assets = root.find('asset')
     equality = root.find('equality')
 
-    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/')
+    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/')
     compiler_xml = xml.fromstring(compiler_str)
     root.append(compiler_xml)
 
