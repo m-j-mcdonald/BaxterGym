@@ -566,7 +566,7 @@ class BaxterContinuousClothEnv(BaxterClothEnv):
                                      cloth_info['spacing'], 
                                      cloth_info['radius'],
                                      (0.5, -0.2, 0.0))
-        obs_include = set(['end_effector', 'overhead_image', 'cloth_points'])
+        obs_include = set(['end_effector', 'cloth_points', 'cloth_joints'])
         super(BaxterClothEnv, self).__init__(mode='end_effector_pos', 
                                              items=[cloth], 
                                              cloth_info=cloth_info, 
@@ -585,7 +585,7 @@ class BaxterDiscreteClothEnv(BaxterClothEnv):
                                      cloth_info['spacing'], 
                                      cloth_info['radius'],
                                      (0.5, -0.2, 0.0))
-        obs_include = set(['end_effector', 'overhead_image', 'cloth_points'])
+        obs_include = set(['end_effector', 'cloth_points', 'cloth_joints'])
         super(BaxterClothEnv, self).__init__(mode='discrete_pos', 
                                              items=[cloth], 
                                              cloth_info=cloth_info, 
