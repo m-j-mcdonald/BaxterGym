@@ -51,15 +51,14 @@ class Baxter(Robot):
         iktype = IkParameterizationType.Transform6D
         ikmodel = databases.inversekinematics.InverseKinematicsModel(robot, IkParameterizationType.Transform6D, True)
         if not ikmodel.load():
-            print 'Something went wrong when loading ikmodel'
-        #   ikmodel.autogenerate()
+            ikmodel.autogenerate()
         right_manip = robot.GetManipulator('right_arm')
         ikmodel.manip = right_manip
         right_manip.SetIkSolver(ikmodel.iksolver)
 
         ikmodel = databases.inversekinematics.InverseKinematicsModel(robot, IkParameterizationType.Transform6D, True)
         if not ikmodel.load():
-            print 'Something went wrong'
+            ikmodel.autogenerate()
         left_manip = robot.GetManipulator('left_arm')
         ikmodel.manip = left_manip
         left_manip.SetIkSolver(ikmodel.iksolver)

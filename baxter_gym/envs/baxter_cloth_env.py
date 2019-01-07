@@ -256,7 +256,6 @@ class BaxterClothEnv(BaxterMJCEnv):
                     # if not self.physics.model.eq_active[r_eq_ind]:
                     #     self._shift_cloth_to_grip(right_ee, (i, j))
                     self.physics.model.eq_active[r_eq_ind] = True
-                    print 'Activated right equality'.format(i, j)
                 # else:
                 #     self.physics.model.eq_active[r_eq_ind] = False
 
@@ -264,7 +263,6 @@ class BaxterClothEnv(BaxterMJCEnv):
                     # if not self.physics.model.eq_active[l_eq_ind]:
                     #     self._shift_cloth_to_grip(left_ee, (i, j))
                     self.physics.model.eq_active[l_eq_ind] = True
-                    print 'Activated left equality {0} {1}'.format(i, j)
                 # else:
                 #     self.physics.model.eq_active[l_eq_ind] = False
 
@@ -425,7 +423,6 @@ class BaxterClothEnv(BaxterMJCEnv):
             right_most_corner = min(corners, key=lambda c: c[0])
             reward -= 1e1 * np.linalg.norm(ee_left_pos-right_most_corner)
 
-        # print 'Reward calculation time:', time.time() - start_t
         return reward
 
 
@@ -536,8 +533,6 @@ class BaxterClothEnv(BaxterMJCEnv):
                 state.append(LEFT_REACHABLE)
                 break
 
-        # if any(map(lambda c: c[1] < 0, corners)): state.append(RIGHT_REACHABLE)
-        # if any(map(lambda c: c[1] > 0, corners)): state.append(LEFT_REACHABLE)
         if any([np.all(np.abs(ee_right_pos - c) < 0.02) and grips[0] < 0.05 for c in corners]): state.append(IN_RIGHT_GRIPPER)
         if any([np.all(np.abs(ee_left_pos - c) < 0.02) and grips[1] < 0.05 for c in corners]): state.append(IN_LEFT_GRIPPER)
 

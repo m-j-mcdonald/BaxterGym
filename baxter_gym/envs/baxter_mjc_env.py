@@ -225,7 +225,7 @@ class BaxterMJCEnv(object):
             self._matplot_im = plt.imshow(self.render(view=False))
             plt.show()
         except TclError:
-            print '\nCould not find display to launch viewer (this does not affect the ability to render images)\n'
+            print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')
 
 
     def _set_obs_info(self, obs_include):
@@ -650,11 +650,11 @@ class BaxterMJCEnv(object):
 
         if use_right:
             if jnt_cmd is None or check_limits and np.any(np.abs(jnt_cmd - arm_jnts[:7]) > 0.3):
-                print 'Cannot complete action; ik will cause unstable control'
+                print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[:7]
         else:
             if jnt_cmd is None or check_limits and np.any(np.abs(jnt_cmd - arm_jnts[7:]) > 0.3):
-                print 'Cannot complete action; ik will cause unstable control'
+                print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[7:]
 
         return jnt_cmd
@@ -719,7 +719,6 @@ class BaxterMJCEnv(object):
             # target_right_ee_rot /= np.linalg.norm(target_right_ee_rot)
             # target_left_ee_rot /= np.linalg.norm(target_left_ee_rot)
 
-            start_t = time.time()
             right_cmd = self._calc_ik(target_right_ee_pos, 
                                       target_right_ee_rot, 
                                       use_right=True)
@@ -727,7 +726,6 @@ class BaxterMJCEnv(object):
             left_cmd = self._calc_ik(target_left_ee_pos, 
                                      target_left_ee_rot, 
                                      use_right=False)
-            # print 'IK time:', time.time() - start_t
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
@@ -746,7 +744,6 @@ class BaxterMJCEnv(object):
             target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_left_ee_rot = START_EE[10:14]
 
-            start_t = time.time()
             right_cmd = self._calc_ik(target_right_ee_pos, 
                                       target_right_ee_rot, 
                                       use_right=True)
@@ -754,7 +751,6 @@ class BaxterMJCEnv(object):
             left_cmd = self._calc_ik(target_left_ee_pos, 
                                      target_left_ee_rot, 
                                      use_right=False)
-            # print 'IK time:', time.time() - start_t
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
@@ -782,7 +778,6 @@ class BaxterMJCEnv(object):
                    False, \
                    {}
 
-        start_t = time.time()
         for t in range(MJC_DELTAS_PER_STEP / 4):
             error = abs_cmd - self.physics.data.qpos[1:19]
             cmd = 7e1 * error
@@ -792,18 +787,6 @@ class BaxterMJCEnv(object):
             cmd[17] = -cmd[16]
             self.physics.set_control(cmd)
             self.physics.step()
-        # print 'Step time:', time.time() - start_t
-
-        if debug:
-            print '\n'
-            print 'Joint Errors:', abs_cmd - self.physics.data.qpos[1:19]
-            print 'EE Position', self.get_right_ee_pos(), self.get_left_ee_pos()
-            print 'EE Quaternion', self.get_right_ee_rot(), self.get_left_ee_rot()
-            corner1 = self.get_item_pose('B0_0')
-            corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
-            corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-            corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
-            print 'Cloth corners:', corner1, corner2, corner3, corner4
 
         return self.get_obs(obs_include=obs_include), \
                self.compute_reward(), \
@@ -821,18 +804,13 @@ class BaxterMJCEnv(object):
 
     def render(self, height=_CAM_HEIGHT, width=_CAM_WIDTH, camera_id=0, overlays=(),
              depth=False, scene_option=None, mode='rgb_array', view=True):
-        start_t = time.time()
-
         # Make friendly with dm_control or gym interface
         depth = depth or mode == 'depth_array'
         view = view or mode == 'human'
 
         pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
-        # print 'Pixels time:', time.time() - start_t
         if view and self.use_viewer:
-            start_t = time.time()
             self._render_viewer(pixels)
-            # print 'View time:', time.time() - start_t
         return pixels
 
 
@@ -947,10 +925,10 @@ class BaxterMJCEnv(object):
 
     def list_joint_info(self):
         for i in range(self.physics.model.njnt):
-            print '\n'
-            print 'Jnt ', i, ':', self.physics.model.id2name(i, 'joint')
-            print 'Axis :', self.physics.model.jnt_axis[i]
-            print 'Dof adr :', self.physics.model.jnt_dofadr[i]
+            print('\n')
+            print('Jnt ', i, ':', self.physics.model.id2name(i, 'joint'))
+            print('Axis :', self.physics.model.jnt_axis[i])
+            print('Dof adr :', self.physics.model.jnt_dofadr[i])
             body_id = self.physics.model.jnt_bodyid[i]
-            print 'Body :', self.physics.model.id2name(body_id, 'body')
-            print 'Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body')
+            print('Body :', self.physics.model.id2name(body_id, 'body'))
+            print('Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body'))

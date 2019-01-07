@@ -6,6 +6,7 @@ RUN apt-get update
 RUN apt-get install build-essential cmake gcc g++ git ipython minizip python-dev python-h5py python-numpy python-scipy python-sympy qt4-dev-tools libassimp-dev libavcodec-dev libavformat-dev libavformat-dev libboost-all-dev libboost-date-time-dev libbullet-dev libfaac-dev libglew-dev libgsm1-dev liblapack-dev liblog4cxx-dev libmpfr-dev libode-dev libogg-dev libpcrecpp0v5 libpcre3-dev libqhull-dev libqt4-dev libsoqt-dev-common libsoqt4-dev libswscale-dev libswscale-dev libvorbis-dev libx264-dev libxml2-dev libxvidcore-dev python-pip libglfw3 libgl1-mesa-glx libosmesa6 python-matplotlib software-properties-common libcairo2-dev libjasper-dev libpoppler-glib-dev libsdl2-dev libtiff5-dev libxrandr-dev libccd-dev -y
 
 RUN pip install --upgrade --user sympy==0.7.1
+RUN apt-get remove python-mpmath
 RUN git clone https://github.com/rdiankov/collada-dom.git
 WORKDIR /collada-dom
 RUN mkdir build
@@ -15,17 +16,17 @@ RUN make -j4
 RUN make install
 WORKDIR /
 
-RUN echo 'deb http://security.ubuntu.com/ubuntu xenial-security main' >> /etc/apt/sources.list
-RUN apt-get update
-RUN git clone --branch OpenSceneGraph-3.4 https://github.com/openscenegraph/OpenSceneGraph.git
-WORKDIR OpenSceneGraph 
-RUN mkdir build 
-WORKDIR /OpenSceneGraph/build
-RUN cmake .. -DDESIRED_QT_VERSION=4
-RUN make install_ld_conf
-RUN make -j4
-RUN make install
-WORKDIR /
+# RUN echo 'deb http://security.ubuntu.com/ubuntu xenial-security main' >> /etc/apt/sources.list
+# RUN apt-get update
+# RUN git clone --branch OpenSceneGraph-3.4 https://github.com/openscenegraph/OpenSceneGraph.git
+# WORKDIR OpenSceneGraph 
+# RUN mkdir build 
+# WORKDIR /OpenSceneGraph/build
+# RUN cmake .. -DDESIRED_QT_VERSION=4
+# RUN make install_ld_conf
+# RUN make -j4
+# RUN make install
+# WORKDIR /
 
 RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
 RUN git clone https://github.com/flexible-collision-library/fcl.git
@@ -44,7 +45,8 @@ RUN git checkout 9c79ea260e1c009b0a6f7c03ec34f59629ccbe2c
 # RUn git checkout master
 RUN mkdir build 
 WORKDIR /openrave/build
-RUN cmake .. -DOSG_DIR=/usr/local/lib64/
+# RUN cmake .. -DOSG_DIR=/usr/local/lib64/
+RUN cmake -OPT_QTOSG_VIEWER=OFF -OPT_OCTAVE=OFF -OPT_MATLAB=OFF -OPT_EXTRA_ROBOTS=OFF ..
 RUN make -j4
 RUN make install
 
