@@ -197,6 +197,10 @@ class BaxterClothEnv(BaxterMJCEnv):
             return corners[2] if corners[2][0] > corners[3][0] else corners[3]
         if label == 'bottom_right':
             return corners[2] if corners[2][0] < corners[3][0] else corners[3]
+        if label == 'leftmost':
+            return self.get_leftmost_cloth_corner()
+        if label == 'rightmost':
+            return self.get_rightmost_cloth_corner()
         return super(BaxterClothEnv, self).get_pos_from_label(label)
 
 
