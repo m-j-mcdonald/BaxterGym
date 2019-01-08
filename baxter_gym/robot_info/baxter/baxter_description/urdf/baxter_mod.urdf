@@ -693,7 +693,7 @@ From: https://github.com/StanfordVL/robosuite/blob/master/robosuite/models/asset
     <child link="right_gripper_base"/>
   </joint>
   <joint name="right_endpoint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.0 0 0.025"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.1327"/>
     <parent link="right_gripper_base"/>
     <child link="right_gripper"/>
   </joint>
@@ -1122,7 +1122,7 @@ From: https://github.com/StanfordVL/robosuite/blob/master/robosuite/models/asset
     <child link="left_gripper_base"/>
   </joint>
   <joint name="left_endpoint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.0 0 0.025"/>
+    <origin rpy="0 0 0" xyz="0.0 0 0.1327"/>
     <parent link="left_gripper_base"/>
     <child link="left_gripper"/>
   </joint>

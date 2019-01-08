@@ -2,13 +2,20 @@
 # mpl.use('Qt4Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-import openravepy
 import os
 from threading import Thread
 import time
 import xml.etree.ElementTree as xml
 
 from tkinter import TclError
+
+try:
+    import openravepy
+    from baxter_gym.util_classes.openrave_body import OpenRAVEBody
+    from baxter_gym.robot_info.robots import Baxter
+    USE_OPENRAVE = False
+except:
+    USE_OPENRAVE = False
 
 from dm_control import render
 from dm_control.mujoco import Physics
@@ -23,8 +30,7 @@ from dm_control.viewer import views
 from gym import spaces
 
 import baxter_gym
-from baxter_gym.util_classes.openrave_body import OpenRAVEBody
-from baxter_gym.robot_info.robots import Baxter
+from baxter_gym.util_classes.ik_controller import BaxterIKController
 from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
 
@@ -136,8 +142,11 @@ class BaxterMJCEnv(object):
 
         self._load_model()
 
-        env = openravepy.Environment()
-        self._ikbody = OpenRAVEBody(env, 'baxter', Baxter())
+        if USE_OPENRAVE:
+            env = openravepy.Environment()
+            self._ikbody = OpenRAVEBody(env, 'baxter', Baxter())
+        else:
+            self._ikcontrol = BaxterIKController(lambda: self.get_arm_joint_angles())
 
         # Start joints with grippers pointing downward
         self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], True, False)
@@ -631,22 +640,27 @@ class BaxterMJCEnv(object):
     def _calc_ik(self, pos, quat, use_right=True, check_limits=True):
         arm_jnts = self.get_arm_joint_angles()
         grip_jnts = self.get_gripper_joint_angles()
-        self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
+        if USE_OPENRAVE:
+            self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
 
-        dof_map = {
-            'rArmPose': arm_jnts[:7],
-            'rGripper': grip_jnts[0],
-            'lArmPose': arm_jnts[7:],
-            'lGripper': grip_jnts[1],
-        }
+            dof_map = {
+                'rArmPose': arm_jnts[:7],
+                'rGripper': grip_jnts[0],
+                'lArmPose': arm_jnts[7:],
+                'lGripper': grip_jnts[1],
+            }
 
-        manip_name = 'right_arm' if use_right else 'left_arm'
-        trans = np.zeros((4, 4))
-        trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-        trans[:3, 3] = pos
-        trans[3, 3] = 1
+            manip_name = 'right_arm' if use_right else 'left_arm'
+            trans = np.zeros((4, 4))
+            trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
+            trans[:3, 3] = pos + np.array([0.07, 0, 0])
+            trans[3, 3] = 1
 
-        jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+            jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+
+        else:
+            cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
+            jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
         if use_right:
             if jnt_cmd is None or check_limits and np.any(np.abs(jnt_cmd - arm_jnts[:7]) > 0.3):
@@ -661,23 +675,27 @@ class BaxterMJCEnv(object):
 
 
     def _check_ik(self, pos, quat, use_right=True):
-        arm_jnts = self.get_arm_joint_angles()
-        grip_jnts = self.get_gripper_joint_angles()
-        self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
+        if USE_OPENRAVE:
+            arm_jnts = self.get_arm_joint_angles()
+            grip_jnts = self.get_gripper_joint_angles()
+            self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
 
-        dof_map = {
-            'rArmPose': arm_jnts[:7],
-            'rGripper': grip_jnts[0],
-            'lArmPose': arm_jnts[7:],
-            'lGripper': grip_jnts[1],
-        }
+            dof_map = {
+                'rArmPose': arm_jnts[:7],
+                'rGripper': grip_jnts[0],
+                'lArmPose': arm_jnts[7:],
+                'lGripper': grip_jnts[1],
+            }
 
-        manip_name = 'right_arm' if use_right else 'left_arm'
-        trans = np.zeros((4, 4))
-        trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-        trans[:3, 3] = pos
-        trans[3, 3] = 1
-        jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+            manip_name = 'right_arm' if use_right else 'left_arm'
+            trans = np.zeros((4, 4))
+            trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
+            trans[:3, 3] = pos + np.array([0.07, 0, 0])
+            trans[3, 3] = 1
+            jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+        else:
+            cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
+            jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
         return jnt_cmd is not None
 
