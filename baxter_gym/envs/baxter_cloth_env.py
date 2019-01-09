@@ -35,7 +35,7 @@ class BaxterClothEnv(BaxterMJCEnv):
                                              items=[cloth], 
                                              cloth_info=cloth_info, 
                                              obs_include=obs_include,
-                                             im_dims=im_dims
+                                             im_dims=im_dims,
                                              max_iter=500,
                                              view=view)
 

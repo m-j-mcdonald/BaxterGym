@@ -821,15 +821,15 @@ class BaxterMJCEnv(Env):
         return self._cur_iter >= self._max_iter
 
 
-    def render(self, height=0, width=0, camera_id=0, overlays=(),
-             depth=False, scene_option=None, mode='rgb_array', view=True):
+    def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
+               overlays=(), depth=False, scene_option=None, view=True):
         # Make friendly with dm_control or gym interface
         depth = depth or mode == 'depth_array'
         view = view or mode == 'human'
         if height == 0: height = self.im_height
         if width == 0: width = self.im_wid
 
-        pixels = self.physics.render(height=height, wdth=width, camera_id, overlays, depth, scene_option)
+        pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
         if view and self.use_viewer:
             self._render_viewer(pixels)
         return pixels
