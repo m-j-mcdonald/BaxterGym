@@ -313,7 +313,7 @@ class BaxterClothEnv(BaxterMJCEnv):
 
         if NO_CLOTH in state: return 0
 
-        if TWO_FOLD in state: return 1e3
+        if TWO_FOLD in state: return 1e4
 
         reward = 0
 

@@ -98,7 +98,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 
 
 class BaxterMJCEnv(Env):
-    def __init__(self, mode='end_effector', obs_include=[], items=[], cloth_info=None, im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=1000, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], cloth_info=None, im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=250, view=False):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
