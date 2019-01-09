@@ -571,7 +571,7 @@ class BaxterContinuousClothEnv(BaxterClothEnv):
                                              cloth_info=cloth_info, 
                                              obs_include=obs_include,
                                              im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT),
-                                             view=True)
+                                             view=False)
 
 
 
@@ -590,4 +590,4 @@ class BaxterDiscreteClothEnv(BaxterClothEnv):
                                              cloth_info=cloth_info, 
                                              obs_include=obs_include, 
                                              im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT),
-                                             view=True)
+                                             view=False)
