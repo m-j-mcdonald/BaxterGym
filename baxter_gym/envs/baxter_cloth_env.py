@@ -39,7 +39,7 @@ class BaxterClothEnv(BaxterMJCEnv):
                                              max_iter=500,
                                              view=view)
 
-    def reset():
+    def reset(self):
         self.randomize_cloth()
         self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], True, False)
         self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], False, False)
