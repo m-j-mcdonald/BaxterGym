@@ -111,7 +111,7 @@ class BaxterMJCEnv(Env):
         self.obs_include = obs_include
         self._joint_map_cache = {}
         self._ind_cache = {}
-        self._cloth_present = True
+        self._cloth_present = cloth_info is not None
         if self._cloth_present:
             self.cloth_width = cloth_info['width']
             self.cloth_length = cloth_info['length']

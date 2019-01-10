@@ -49,6 +49,15 @@ class BaxterClothEnv(BaxterMJCEnv):
         super(BaxterClothEnv, self).reset()
 
 
+    def get_state(self):
+        return self.physics.data.qpos.copy()
+
+
+    def set_state(self, state):
+        self.physics.data.qpos[:] = state
+        self.physics.forward()
+
+
     def _set_obs_info(self, obs_include):
         ind = super(BaxterClothEnv, self)._set_obs_info(obs_include)
 

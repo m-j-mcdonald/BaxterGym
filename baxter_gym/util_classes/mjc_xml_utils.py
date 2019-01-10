@@ -84,7 +84,6 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
     return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
 
 
-
 def generate_xml(base_file, target_file, items):
     base_xml = xml.parse(base_file)
     root = base_xml.getroot()
