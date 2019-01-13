@@ -13,7 +13,7 @@ try:
     import openravepy
     from baxter_gym.util_classes.openrave_body import OpenRAVEBody
     from baxter_gym.robot_info.robots import Baxter
-    USE_OPENRAVE = False
+    USE_OPENRAVE = True
 except:
     USE_OPENRAVE = False
 
@@ -389,7 +389,14 @@ class BaxterMJCEnv(Env):
 
     def get_item_pose(self, name, mujoco_frame=True):
         model = self.physics.model
-        item_ind = model.name2id(name, 'body')
+        if name in self._ind_cache:
+            item_ind = self._ind_cache[name]
+        else:
+            try:
+                item_ind = model.name2id(name, 'body')
+            except:
+                item_ind = -1
+            self._ind_cache[name] = item_ind
         pos = self.physics.data.xpos[item_ind].copy()
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
@@ -664,11 +671,11 @@ class BaxterMJCEnv(Env):
             jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
         if use_right:
-            if jnt_cmd is None or check_limits and np.any(np.abs(jnt_cmd - arm_jnts[:7]) > 0.3):
+            if jnt_cmd is None or (check_limits and np.any(np.abs(jnt_cmd - arm_jnts[:7]) > 0.3)):
                 print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[:7]
         else:
-            if jnt_cmd is None or check_limits and np.any(np.abs(jnt_cmd - arm_jnts[7:]) > 0.3):
+            if jnt_cmd is None or (check_limits and np.any(np.abs(jnt_cmd - arm_jnts[7:]) > 0.3)):
                 print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[7:]
 
@@ -832,6 +839,7 @@ class BaxterMJCEnv(Env):
         pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
         if view and self.use_viewer:
             self._render_viewer(pixels)
+
         return pixels
 
 
@@ -872,20 +880,29 @@ class BaxterMJCEnv(Env):
             param = plan.params[param_name]
             if param.is_symbol(): continue
             if param._type != 'Robot':
-                param_ind = model.name2id(param.name, 'body')
+                if param.name in self._ind_cache:
+                    param_ind = self._ind_cache[param.name]
+                else:
+                    try:
+                        param_ind = model.name2id(param.name, 'body')
+                    except:
+                        param_ind = -1
+                    self._ind_cache[param.name] = -1
                 if param_ind == -1: continue
 
                 pos = param.pose[:, t]
                 xpos[param_ind] = pos + np.array([0, 0, MUJOCO_MODEL_Z_OFFSET])
                 if hasattr(param, 'rotation'):
                     rot = param.rotation[:, t]
-                    xquat[param_ind] = T.quaternion_from_euler(rot)
+                    mat = OpenRAVEBody.transform_from_obj_pose([0,0,0], rot)[:3,:3]
+                    xquat[param_ind] = openravepy.quatFromRotationMatrix(mat)
 
-        model.body_pos = xpos
-        model.body_quat = xquat
+        self.physics.data.xpos[:] = xpos[:]
+        self.physics.data.xquat[:] = xquat[:]
+        model.body_pos[:] = xpos[:]
+        model.body_quat[:] = xquat[:]
 
         baxter = plan.params['baxter']
-        self.physics.data.qpos = np.zeros(19,1)
         self.physics.data.qpos[1:8] = baxter.rArmPose[:, t]
         self.physics.data.qpos[8] = baxter.rGripper[:, t]
         self.physics.data.qpos[9] = -baxter.rGripper[:, t]

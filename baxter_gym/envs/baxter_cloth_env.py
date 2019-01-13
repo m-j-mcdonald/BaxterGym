@@ -171,6 +171,20 @@ class BaxterClothEnv(BaxterMJCEnv):
         return self.get_lowermost_cloth_point(corners)
 
 
+    def get_highest_left_cloth_corner(self):
+        # "Highest" along the z-axis
+        corners = self.get_corners()
+        corners = sorted(corners, lambda c1, c2: 1 if c1[2] < c2[2] else -1)
+        return corners[0] if corners[0][1] > corners[1][1] else corners[1]
+
+
+    def get_highest_right_cloth_corner(self):
+        # "Highest" along the z-axis
+        corners = self.get_corners()
+        corners = sorted(corners, lambda c1, c2: 1 if c1[2] < c2[2] else -1)
+        return corners[0] if corners[0][1] <= corners[1][1] else corners[1]
+
+
     def get_leftmost_reachable_corner(self, arm='left'):
         corners = self.get_corners()
         corners = sorted(corners, lambda c1, c2: 1 if c1[1] < c2[1] else -1)
@@ -220,6 +234,10 @@ class BaxterClothEnv(BaxterMJCEnv):
             return self.get_leftmost_cloth_corner()
         if label == 'rightmost':
             return self.get_rightmost_cloth_corner()
+        if label == 'highest_left':
+            return self.get_highest_left_cloth_corner()
+        if label == 'highest_right':
+            return self.get_highest_right_cloth_corner()
         return super(BaxterClothEnv, self).get_pos_from_label(label)
 
 
@@ -307,12 +325,11 @@ class BaxterClothEnv(BaxterMJCEnv):
 
         x = np.random.uniform(x_bounds[0], x_bounds[1])
         y = np.random.uniform(y_bounds[0],y_bounds[1])
-        z = np.random.uniform(0, 0.025)
+        z = np.random.uniform(0, 0.0)
         self._shift_cloth(x, y, z)
 
         jnt_angles = self.get_joint_angles()
-        for _ in range(5):
-            self.physics.step()
+        self.physics.step()
 
         self.physics.data.qpos[1:19] = jnt_angles
         self.physics.forward()
