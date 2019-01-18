@@ -788,7 +788,7 @@ class BaxterMJCEnv(Env):
         elif mode == 'discrete_pos':
             if action == 1: return self.move_right_gripper_forward()
             if action == 2: return self.move_right_gripper_backward()
-            if aciton == 3: return self.move_right_gripper_left()
+            if action == 3: return self.move_right_gripper_left()
             if action == 4: return self.move_right_gripper_right()
             if action == 5: return self.move_right_gripper_up()
             if action == 6: return self.move_right_gripper_down()
@@ -797,7 +797,7 @@ class BaxterMJCEnv(Env):
 
             if action == 9: return self.move_left_gripper_forward()
             if action == 10: return self.move_left_gripper_backward()
-            if aciton == 11: return self.move_left_gripper_left()
+            if action == 11: return self.move_left_gripper_left()
             if action == 12: return self.move_left_gripper_right()
             if action == 13: return self.move_left_gripper_up()
             if action == 14: return self.move_left_gripper_down()
