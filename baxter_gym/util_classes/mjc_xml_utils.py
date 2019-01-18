@@ -68,17 +68,17 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
                     <freejoint />
                     <composite type="cloth" count="{3} {4} 1" spacing="{5}" flatinertia="0.01">
                         <joint kind="main" armature="0.01"/>
-                        <skin material="cloth3" texcoord="true" inflate="0.005" subgrid="3" />
+                        <skin material="cloth" texcoord="true" inflate="0.005" subgrid="2" />
                         <geom type="sphere" size="{6}" mass="0.005"/>
                     </composite>
                 </body>\n
                 '''.format(pos[0], pos[1], pos[2], length, width, spacing, radius)
 
     xml_body = xml.fromstring(body)
-    texture = '<texture name="cloth3" type="2d" file="cloth_3.png" />'
+    texture = '<texture name="cloth" type="2d" file="cloth_4.png" />'
     xml_texture = xml.fromstring(texture)
 
-    material = '<material name="cloth3" texture="cloth3" shininess="0.25" />'
+    material = '<material name="cloth" texture="cloth" shininess="0.0" />'
     xml_material = xml.fromstring(material)
 
     return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}

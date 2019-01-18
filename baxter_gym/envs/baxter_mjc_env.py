@@ -472,7 +472,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[0] = 0.01
+        act[0] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -482,7 +482,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[0] = -0.01
+        act[0] = -0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -492,7 +492,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[1] = 0.01
+        act[1] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -502,7 +502,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[1] = -0.01
+        act[1] = -0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -512,7 +512,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[2] = 0.01
+        act[2] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -522,7 +522,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[2] = -0.01
+        act[2] = -0.02
         return self.step(act, mode='end_effector_pos')
 
     def open_right_gripper(self):
@@ -543,7 +543,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[4] = 0.01
+        act[4] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -553,7 +553,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[4] = -0.01
+        act[4] = -0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -563,7 +563,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[5] = 0.01
+        act[5] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -573,7 +573,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[5] = -0.01
+        act[5] = -0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -583,7 +583,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[6] = 0.01
+        act[6] = 0.02
         return self.step(act, mode='end_effector_pos')
 
 
@@ -593,7 +593,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[6] = -0.01
+        act[6] = -0.02
         return self.step(act, mode='end_effector_pos')
 
     def open_left_gripper(self):

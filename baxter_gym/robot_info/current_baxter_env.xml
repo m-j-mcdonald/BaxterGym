@@ -53,8 +53,8 @@
   <worldbody>
     <light ambient="0 0 0" cutoff="90" diffuse="1 1 1" dir="-1 0 -2.5" directional="false" exponent="1" pos="1 0 1.5" specular="0 0 0" />
     <geom name="ground" pos="0 0 -0.925" rgba="0.7 0.6 0.5 1" size="4 4 .05" type="plane" />
-    <camera name="overhead_cam" pos="0.5 0.0 1.25" quat="0.707 0 0 -0.707" />
-    <camera name="forward_cam" pos="2 0.0 0.1" quat="0.5 0.5 0.5 0.5" />
+    <camera name="overhead_cam" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
+    <camera name="forward_cam" pos="2 0.0 0.5" quat="0.6535954 0.2703603 0.2705757 0.6530752" />
 
     <body name="base" pos="0 0 0">
       <inertial diaginertia="0.001 0.001 0.001" mass="10" pos="0 0 0" />
@@ -140,7 +140,7 @@
                             
                             <body name="right_gripper_l_finger" pos="0 -0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" quat="0 0 0 -1" />
-                              <joint armature=".01" axis="0 1 0" limited="true" name="right_gripper_l_finger_joint" pos="0 0 0" range="0 0.020833" type="slide" />
+                              <joint armature=".01" axis="0 1 0" limited="true" name="right_gripper_l_finger_joint" pos="0 0 0" range="0 0.050833" type="slide" />
                               <geom class="viz" euler="1.57 1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                               <geom pos="0 0.01725 0.0615" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                               <geom pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
@@ -153,7 +153,7 @@
                             </body>
                             <body name="right_gripper_r_finger" pos="0 0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" />
-                              <joint armature=".01" axis="0 1 0" limited="true" name="right_gripper_r_finger_joint" pos="0 0 0" range="-0.020833 0" type="slide" />
+                              <joint armature=".01" axis="0 1 0" limited="true" name="right_gripper_r_finger_joint" pos="0 0 0" range="-0.050833 0" type="slide" />
                               <geom class="viz" euler="1.57 -1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                               <geom pos="0 -0.01725 0.0615" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                               <geom pos="0.005 0.003 0.0083" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
@@ -226,7 +226,7 @@
                             
                             <body name="left_gripper_l_finger" pos="0 -0.0015 0.02">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" quat="0 0 0 -1" />
-                                <joint armature=".01" axis="0 1 0" limited="true" name="left_gripper_l_finger_joint" pos="0 0 0" range="0 0.020833" type="slide" />
+                                <joint armature=".01" axis="0 1 0" limited="true" name="left_gripper_l_finger_joint" pos="0 0 0" range="0 0.050833" type="slide" />
                                 <geom class="viz" euler="1.57 1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                                 <geom pos="0 0.01725 0.0615" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                                 <geom pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
@@ -238,7 +238,7 @@
                             </body>
                             <body name="left_gripper_r_finger" pos="0 0.0015 0.02">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" />
-                                <joint armature=".01" axis="0 1 0" limited="true" name="left_gripper_r_finger_joint" pos="0 0 0" range="-0.020833 0" type="slide" />
+                                <joint armature=".01" axis="0 1 0" limited="true" name="left_gripper_r_finger_joint" pos="0 0 0" range="-0.050833 0" type="slide" />
                                 <geom class="viz" euler="1.57 -1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                                 <geom pos="0 -0.01725 0.0615" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                                 <geom pos="0.005 0.003 0.0083" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
