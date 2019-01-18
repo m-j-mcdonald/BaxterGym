@@ -46,7 +46,7 @@ class BaxterClothEnv(BaxterMJCEnv):
         self.physics.forward()
         self._cur_iter = 0
 
-        super(BaxterClothEnv, self).reset()
+        return super(BaxterClothEnv, self).reset()
 
 
     def get_state(self):

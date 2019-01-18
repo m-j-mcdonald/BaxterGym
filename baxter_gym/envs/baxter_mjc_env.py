@@ -801,6 +801,8 @@ class BaxterMJCEnv(Env):
             if action == 12: return self.move_left_gripper_right()
             if action == 13: return self.move_left_gripper_up()
             if action == 14: return self.move_left_gripper_down()
+            if action == 15: return self.open_left_gripper()
+            if action == 16: return self.close_left_gripper()
             return self.get_obs(), \
                    self.compute_reward(), \
                    False, \
@@ -859,6 +861,7 @@ class BaxterMJCEnv(Env):
                 'cd': 0.,
                 'ci': 0.,
             }
+        return self.get_obs()
 
 
     @classmethod
