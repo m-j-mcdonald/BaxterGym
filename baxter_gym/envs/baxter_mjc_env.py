@@ -364,6 +364,7 @@ class BaxterMJCEnv(Env):
         pos = (self.physics.data.xpos[ll_gripper_ind] + self.physics.data.xpos[lr_gripper_ind]) / 2
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            pos[0] -= MUJOCO_MODEL_X_OFFSET
         return pos 
 
 
@@ -374,6 +375,7 @@ class BaxterMJCEnv(Env):
         pos = (self.physics.data.xpos[rr_gripper_ind] + self.physics.data.xpos[rl_gripper_ind]) / 2
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            pos[0] -= MUJOCO_MODEL_X_OFFSET
         return pos
 
 
@@ -402,6 +404,7 @@ class BaxterMJCEnv(Env):
         pos = self.physics.data.xpos[item_ind].copy()
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            pos[0] -= MUJOCO_MODEL_X_OFFSET
         return pos
 
 
@@ -414,9 +417,9 @@ class BaxterMJCEnv(Env):
         return rot
 
 
-    def get_pos_from_label(self, label):
+    def get_pos_from_label(self, label, mujoco_frame=True):
         if label in self._item_map:
-            return self.get_item_pose(label)
+            return self.get_item_pose(label, mujoco_frame)
         return None
 
 
@@ -663,7 +666,7 @@ class BaxterMJCEnv(Env):
             manip_name = 'right_arm' if use_right else 'left_arm'
             trans = np.zeros((4, 4))
             trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-            trans[:3, 3] = pos + np.array([0.07, 0, 0])
+            trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
             trans[3, 3] = 1
 
             jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
@@ -673,11 +676,11 @@ class BaxterMJCEnv(Env):
             jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
         if use_right:
-            if jnt_cmd is None or (check_limits and np.any(np.abs(jnt_cmd - arm_jnts[:7]) > 0.3)):
+            if jnt_cmd is None:
                 print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[:7]
         else:
-            if jnt_cmd is None or (check_limits and np.any(np.abs(jnt_cmd - arm_jnts[7:]) > 0.3)):
+            if jnt_cmd is None:
                 print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[7:]
 
@@ -700,7 +703,7 @@ class BaxterMJCEnv(Env):
             manip_name = 'right_arm' if use_right else 'left_arm'
             trans = np.zeros((4, 4))
             trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-            trans[:3, 3] = pos + np.array([0.07, 0, 0])
+            trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
             trans[3, 3] = 1
             jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
         else:
@@ -736,7 +739,6 @@ class BaxterMJCEnv(Env):
             cur_right_ee_rot = self.get_right_ee_rot()
             cur_left_ee_pos = self.get_left_ee_pos()
             cur_left_ee_rot = self.get_left_ee_rot()
-
             target_right_ee_pos = cur_right_ee_pos + action[:3]
             target_right_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_right_ee_rot = action[3:7] # cur_right_ee_rot + action[3:7]
@@ -771,6 +773,7 @@ class BaxterMJCEnv(Env):
             target_left_ee_pos = cur_left_ee_pos + action[4:7]
             target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_left_ee_rot = START_EE[10:14]
+
 
             right_cmd = self._calc_ik(target_right_ee_pos, 
                                       target_right_ee_rot, 
@@ -896,7 +899,7 @@ class BaxterMJCEnv(Env):
                 if param_ind == -1: continue
 
                 pos = param.pose[:, t]
-                xpos[param_ind] = pos + np.array([0, 0, MUJOCO_MODEL_Z_OFFSET])
+                xpos[param_ind] = pos + np.array([MUJOCO_MODEL_X_OFFSET, 0, MUJOCO_MODEL_Z_OFFSET])
                 if hasattr(param, 'rotation'):
                     rot = param.rotation[:, t]
                     mat = OpenRAVEBody.transform_from_obj_pose([0,0,0], rot)[:3,:3]

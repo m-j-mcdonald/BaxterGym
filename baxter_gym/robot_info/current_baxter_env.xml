@@ -20,7 +20,7 @@
     <mesh file="meshes/electric_gripper/electric_gripper_base.STL" name="electric_gripper_base" />
     <mesh file="meshes/electric_gripper/fingers/extended_narrow.STL" name="extended_narrow" />
     
-  <texture file="cloth_3.png" name="cloth3" type="2d" /><material name="cloth3" shininess="0.25" texture="cloth3" /></asset>
+  <texture file="cloth_4.png" name="cloth" type="2d" /><material name="cloth" shininess="0.0" texture="cloth" /></asset>
 
   <visual>
     <map fogend="3" fogstart="1.5" />
@@ -54,7 +54,7 @@
     <light ambient="0 0 0" cutoff="90" diffuse="1 1 1" dir="-1 0 -2.5" directional="false" exponent="1" pos="1 0 1.5" specular="0 0 0" />
     <geom name="ground" pos="0 0 -0.925" rgba="0.7 0.6 0.5 1" size="4 4 .05" type="plane" />
     <camera name="overhead_cam" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
-    <camera name="forward_cam" pos="2 0.0 0.5" quat="0.6535954 0.2703603 0.2705757 0.6530752" />
+    <camera name="forward_cam" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" />
 
     <body name="base" pos="0 0 0">
       <inertial diaginertia="0.001 0.001 0.001" mass="10" pos="0 0 0" />
@@ -267,7 +267,7 @@
                     <freejoint />
                     <composite count="3 5 1" flatinertia="0.01" spacing="0.1" type="cloth">
                         <joint armature="0.01" kind="main" />
-                        <skin inflate="0.005" material="cloth3" subgrid="3" texcoord="true" />
+                        <skin inflate="0.005" material="cloth" subgrid="2" texcoord="true" />
                         <geom mass="0.005" size="0.01" type="sphere" />
                     </composite>
                 </body></worldbody>

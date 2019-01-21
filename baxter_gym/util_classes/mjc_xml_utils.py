@@ -3,6 +3,7 @@ import xml.etree.ElementTree as xml
 
 
 MUJOCO_MODEL_Z_OFFSET = -0.665 # -0.706
+MUJOCO_MODEL_X_OFFSET = 0.07
 
 
 def get_param_xml(param):

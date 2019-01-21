@@ -1,4 +1,5 @@
 from baxter_gym.envs.baxter_mjc_env import *
+from baxter_gym.utils.mjc_xml_utils import MUJOCO_MODEL_X_OFFSET, MUJOCO_MODEL_Z_OFFSET
 from gym import spaces
 
 NO_CLOTH = 0
@@ -219,40 +220,47 @@ class BaxterClothEnv(BaxterMJCEnv):
         return None, 'No Corner'
 
 
-    def get_pos_from_label(self, label):
+    def get_pos_from_label(self, label, mujoco_frame=True):
         corners = self.get_corners()
         corners = sorted(corners, lambda c1, c2: 1 if c1[1] < c2[1] else -1)
+        pos = None
         if label == 'top_left':
-            return corners[0] if corners[0][0] > corners[1][0] else corners[1]
+            pos = corners[0] if corners[0][0] > corners[1][0] else corners[1]
         if label == 'bottom_left':
-            return corners[0] if corners[0][0] < corners[1][0] else corners[1]
+            pos = corners[0] if corners[0][0] < corners[1][0] else corners[1]
         if label == 'top_right':
-            return corners[2] if corners[2][0] > corners[3][0] else corners[3]
+            pos = corners[2] if corners[2][0] > corners[3][0] else corners[3]
         if label == 'bottom_right':
-            return corners[2] if corners[2][0] < corners[3][0] else corners[3]
+            pos = corners[2] if corners[2][0] < corners[3][0] else corners[3]
         if label == 'leftmost':
-            return self.get_leftmost_cloth_corner()
+            pos = self.get_leftmost_cloth_corner()
         if label == 'rightmost':
-            return self.get_rightmost_cloth_corner()
+            pos = self.get_rightmost_cloth_corner()
         if label == 'highest_left':
-            return self.get_highest_left_cloth_corner()
+            pos = self.get_highest_left_cloth_corner()
         if label == 'highest_right':
-            return self.get_highest_right_cloth_corner()
-        return super(BaxterClothEnv, self).get_pos_from_label(label)
+            pos = self.get_highest_right_cloth_corner()
+        if pos is not None:
+            if not mujoco_frame:
+                pos[2] -= MUJOCO_MODEL_Z_OFFSET
+                pos[0] -= MUJOCO_MODEL_X_OFFSET
+            return pos
+        return super(BaxterClothEnv, self).get_pos_from_label(label, mujoco_frame)
 
 
-    def get_corners(self):
+    def get_corners(self, mujoco_frame=True):
         corners = [self.get_cloth_point(0, 0),
                    self.get_cloth_point(0, self.cloth_width-1),
                    self.get_cloth_point(self.cloth_length-1, 0),
                    self.get_cloth_point(self.cloth_length-1, self.cloth_width-1)]
+        if not mujoco_frame:
+            for c in corners:
+                c[2] -= MUJOCO_MODEL_Z_OFFSET
+                c[0] -= MUJOCO_MODEL_X_OFFSET
         return corners
 
 
     def get_cloth_points(self):
-        if not self._cloth_present:
-            raise AttributeError('No cloth in model (remember to supply cloth_info).')
-
         points_inds = []
         model = self.physics.model
         for x in range(self.cloth_length):
