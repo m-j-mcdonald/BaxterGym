@@ -3,47 +3,72 @@ import xml.etree.ElementTree as xml
 
 
 MUJOCO_MODEL_Z_OFFSET = -0.665 # -0.706
-MUJOCO_MODEL_X_OFFSET = 0.07
+MUJOCO_MODEL_X_OFFSET = -0.07
 
 
 def get_param_xml(param):
+    x, y, z = param.pose[:, 0]
+    y, p, r = param.rotation[:, 0]
     if param._type == 'Cloth':
+        free_body = xml.Element('body', {'name':'{0}_free_body'.format(param.name)})
+        free_body.append(xml.fromstring('<freejoint name="{0}"/>'.format(param.name)))
+        height = param.geom.height
+        radius = 0.02 # param.geom.radius
+        cloth_body = xml.Element('body', {'name': param.name})
+        # cloth_geom = xml.SubElement(cloth_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':"0 0 1 1", 'friction':'1 1 1'})
+        cloth_geom = xml.SubElement(cloth_body, 'geom', {'name': param.name, 'type':'sphere', 'size':"{}".format(radius), 'rgba':"0 0 1 1", 'mass': '0.01'})
+        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
+        free_body.append(cloth_body)
+        return param.name, free_body, {}
+
+    if param._type == 'Can':
+        free_body = xml.Element('body', {'name':'{0}_free_body'.format(param.name)})
+        free_body.append(xml.fromstring('<freejoint name="{0}"/>'.format(param.name)))
         height = param.geom.height
         radius = param.geom.radius
-        x, y, z = param.pose[:, 0]
-        cloth_body = xml.Element('body', {'name': param.name, 'pos': "{} {} {}".format(x,y,z+MUJOCO_MODEL_Z_OFFSET), 'euler': "0 0 0"})
-        # cloth_geom = xml.SubElement(cloth_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':"0 0 1 1", 'friction':'1 1 1'})
-        cloth_geom = xml.SubElement(cloth_body, 'geom', {'name': param.name, 'type':'sphere', 'size':"{}".format(radius), 'rgba':"0 0 1 1", 'friction':'1 1 1'})
-        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
-        # Exclude collisions between the left hand and the cloth to help prevent exceeding the contact limit
-        contacts = [
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_wrist'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_hand'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_gripper_base'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_gripper_l_finger_tip'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_gripper_l_finger'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_gripper_r_finger_tip'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'left_gripper_r_finger'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_wrist'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_hand'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_gripper_base'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_gripper_l_finger_tip'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_gripper_l_finger'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_gripper_r_finger_tip'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'right_gripper_r_finger'}),
-            xml.Element(contacts, 'exclude', {'body1': param.name, 'body2': 'basket'}),
-        ]
+        if hasattr(param.geom ,'color'):
+            color = param.geom.color
+        else:
+            color = 'blue'
 
-        return param.name, cloth_body, {'contacts': contacts}
+        rgba = "0 0 1 1"
+        if color == 'green':
+            rgba = "0 1 0 1"
+        elif color == 'red':
+            rgba = "1 0 0 1"
+        elif color == 'black':
+            rgba = "0 0 0 1"
+        elif color == 'white':
+            rgba = "1 1 1 1"
+
+        can_body = xml.Element('body', {'name': param.name})
+        can_geom = xml.SubElement(can_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':rgba, 'friction':'1 1 1'})
+        can_intertial = xml.SubElement(can_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
+        free_body.append(can_body)
+        return param.name, free_body, {'contacts': contacts}
 
     elif param._type == 'Obstacle': 
         length = param.geom.dim[0]
         width = param.geom.dim[1]
         thickness = param.geom.dim[2]
-        x, y, z = param.pose[:, 0]
-        table_body = xml.Element('body', {'name': param.name, 
-                                          'pos': "{} {} {}".format(x, y, z+MUJOCO_MODEL_Z_OFFSET), 
-                                          'euler': "0 0 0"})
+        if hasattr(param.geom ,'color'):
+            color = param.geom.color
+        else:
+            color = 'grey'
+
+        rgba = "0.5 0.5 0.5 1"
+        if color == 'red':
+            rgba = "1 0 0 1"
+        elif color == 'green':
+            rgba = "0 1 0 1"
+        elif color == 'blue':
+            rgba = "0 0 1 0"
+        elif color == 'black':
+            rgba = "0 0 0 1"
+        elif color == 'white':
+            rgba = "1 1 1 1"
+
+        table_body = xml.Element('body', {'name': param.name})
         table_geom = xml.SubElement(table_body, 'geom', {'name':param.name, 
                                                          'type':'box', 
                                                          'size':"{} {} {}".format(length, width, thickness)})
@@ -61,6 +86,23 @@ def get_param_xml(param):
                                                            'type':'mesh', 
                                                            'mesh': "laundry_basket"})
         return param.name, basket_body, {'contacts': []}
+
+
+def get_table():
+    body = '''
+            <body name="table" pos="0.5 0 -0.4875" euler="0 0 0">
+              <geom name="table" type="box" size="0.75 1.5 0.4375" />
+            </body>
+           '''
+    xml_body = xml.fromstring(body)
+    contacts = [
+        xml.Element('exclude', {'body1': 'table', 'body2': 'pedestal'}),
+        xml.Element('exclude', {'body1': 'table', 'body2': 'torso'}),
+        xml.Element('exclude', {'body1': 'table', 'body2': 'right_arm_mount'}),
+        xml.Element('exclude', {'body1': 'table', 'body2': 'left_arm_mount'}),
+        xml.Element('exclude', {'body1': 'table', 'body2': 'base'}),
+    ]
+    return 'table', xml_body, {'contacts': contacts}
 
 
 def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.)):
@@ -93,7 +135,7 @@ def generate_xml(base_file, target_file, items):
     assets = root.find('asset')
     equality = root.find('equality')
 
-    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/')
+    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/meshes')
     compiler_xml = xml.fromstring(compiler_str)
     root.append(compiler_xml)
 

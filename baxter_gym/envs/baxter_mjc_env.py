@@ -19,6 +19,7 @@ except:
 
 from dm_control import render
 from dm_control.mujoco import Physics
+from dm_control.rl.control import PhysicsError
 from dm_control.viewer import gui
 from dm_control.viewer import renderer
 from dm_control.viewer import runtime
@@ -100,7 +101,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 class BaxterMJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], cloth_info=None, im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=250, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=250, view=False):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -113,12 +114,6 @@ class BaxterMJCEnv(Env):
         self.obs_include = obs_include
         self._joint_map_cache = {}
         self._ind_cache = {}
-        self._cloth_present = cloth_info is not None
-        if self._cloth_present:
-            self.cloth_width = cloth_info['width']
-            self.cloth_length = cloth_info['length']
-            self.cloth_sphere_radius = cloth_info['radius']
-            self.cloth_spacing = cloth_info['spacing']
 
         self.im_wid, self.im_height = im_dims
         self.items = items
@@ -417,6 +412,23 @@ class BaxterMJCEnv(Env):
         return rot
 
 
+    def set_item_pose(self, name, pos, mujoco_frame=True):
+        if not mujoco_frame:
+            pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
+        try:
+            ind = self.physics.model.name2id(name, 'joint')
+            adr = self.physics.model.jnt_qposadr(ind)
+            self.physics.data.qpos[adr:adr+3] = pos
+        except:
+            try:
+                ind = self.physics.model.name2id(name, 'body')
+                self.physics.data.xpos[ind] = pos
+                self.physics.model.body_pos[ind] = pos
+            except:
+                pass
+        self.physics.forward()
+
+
     def get_pos_from_label(self, label, mujoco_frame=True):
         if label in self._item_map:
             return self.get_item_pose(label, mujoco_frame)
@@ -677,11 +689,11 @@ class BaxterMJCEnv(Env):
 
         if use_right:
             if jnt_cmd is None:
-                print('Cannot complete action; ik will cause unstable control')
+                # print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[:7]
         else:
             if jnt_cmd is None:
-                print('Cannot complete action; ik will cause unstable control')
+                # print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[7:]
 
         return jnt_cmd
@@ -818,8 +830,15 @@ class BaxterMJCEnv(Env):
             cmd[8] = -cmd[7]
             cmd[16] = 20 if l_grip > 0.0175 else -75
             cmd[17] = -cmd[16]
+            cur_state = self.physics.data.qpos.copy()
             self.physics.set_control(cmd)
-            self.physics.step()
+            try:
+                self.physics.step()
+            except PhysicsError as e:
+                print 'ERROR IN PHYSICS SIMULATION; RESETTING ENV.'
+                self.physics.reset()
+                self.physics.data.qpos[:] = cur_state[:]
+                self.physics.forward()
 
         return self.get_obs(obs_include=obs_include), \
                self.compute_reward(), \
