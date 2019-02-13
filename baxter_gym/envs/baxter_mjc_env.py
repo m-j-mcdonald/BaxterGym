@@ -5,6 +5,8 @@ import numpy as np
 import os
 from threading import Thread
 import time
+import traceback
+import sys
 import xml.etree.ElementTree as xml
 
 from tkinter import TclError
@@ -435,21 +437,23 @@ class BaxterMJCEnv(Env):
             except:
                 item_type = 'unknown'
 
-        try:
-            self.physics.forward()
-        except PhysicsError as e:
-            print e
-            print '\n\n\n\nERROR IN SETTING {0} POSE.\nPOSE TYPE: {1}.\nRESETTING SIMULATION.\n\n\n\n'.format(name, item_type)
-            qpos = self.physics.data.qpos.copy()
-            xpos = self.physics.data.xpos.copy()
-            if item_type == 'joint':
-                qpos[adr:adr+3] = old_pos
-            elif item_type == 'body':
-                xpos[ind] = old_pos
-            self.physics.reset()
-            self.physics.data.qpos[:] = qpos[:]
-            self.physics.data.xpos[:] = xpos[:]
-            self.physics.forward()
+        self.physics.forward()
+        # try:
+        #     self.physics.forward()
+        # except PhysicsError as e:
+        #     print e
+        #     traceback.print_exception(*sys.exc_info())
+        #     print '\n\n\n\nERROR IN SETTING {0} POSE.\nPOSE TYPE: {1}.\nRESETTING SIMULATION.\n\n\n\n'.format(name, item_type)
+        #     qpos = self.physics.data.qpos.copy()
+        #     xpos = self.physics.data.xpos.copy()
+        #     if item_type == 'joint':
+        #         qpos[adr:adr+3] = old_pos
+        #     elif item_type == 'body':
+        #         xpos[ind] = old_pos
+        #     self.physics.reset()
+        #     self.physics.data.qpos[:] = qpos[:]
+        #     self.physics.data.xpos[:] = xpos[:]
+        #     self.physics.forward()
 
 
     def get_pos_from_label(self, label, mujoco_frame=True):
@@ -858,6 +862,7 @@ class BaxterMJCEnv(Env):
             try:
                 self.physics.step()
             except PhysicsError as e:
+                traceback.print_exception(*sys.exc_info())
                 print '\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n'
                 self.physics.reset()
                 self.physics.data.qpos[:] = cur_state[:]
