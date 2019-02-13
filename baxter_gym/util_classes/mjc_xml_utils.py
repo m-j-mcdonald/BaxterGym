@@ -17,7 +17,7 @@ def get_param_xml(param):
         cloth_body = xml.Element('body', {'name': param.name})
         # cloth_geom = xml.SubElement(cloth_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':"0 0 1 1", 'friction':'1 1 1'})
         cloth_geom = xml.SubElement(cloth_body, 'geom', {'name': param.name, 'type':'sphere', 'size':"{}".format(radius), 'rgba':"0 0 1 1", 'mass': '0.01'})
-        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
+        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'1', 'diaginertia': '0.01 0.01 0.01'})
         free_body.append(cloth_body)
         return param.name, free_body, {}
 
@@ -127,7 +127,7 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
     return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
 
 
-def generate_xml(base_file, target_file, items):
+def generate_xml(base_file, target_file, items, include=[]):
     base_xml = xml.parse(base_file)
     root = base_xml.getroot()
     worldbody = root.find('worldbody')
@@ -150,5 +150,7 @@ def generate_xml(base_file, target_file, items):
         if 'equality' in tag_dict:
             for eq in tag_dict['equality']:
                 equality.append(eq)
+    for f_name in include:
+        worldbody.append(xml.fromstring('<include file="{0}" />'.format(f_name)))
 
     base_xml.write(target_file)

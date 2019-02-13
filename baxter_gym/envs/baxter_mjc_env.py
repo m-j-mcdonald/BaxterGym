@@ -388,15 +388,17 @@ class BaxterMJCEnv(Env):
 
     def get_item_pose(self, name, mujoco_frame=True):
         model = self.physics.model
-        if name in self._ind_cache:
-            item_ind = self._ind_cache[name]
-        else:
+        try:
+            ind = model.name2id(name, 'joint')
+            adr = model.jnt_qposadr[ind]
+            pos = self.physics.data.qpos[adr:adr+3].copy()
+        except Exception as e:
             try:
                 item_ind = model.name2id(name, 'body')
+                pos = self.physics.data.xpos[item_ind].copy()
             except:
                 item_ind = -1
-            self._ind_cache[name] = item_ind
-        pos = self.physics.data.xpos[item_ind].copy()
+
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
             pos[0] -= MUJOCO_MODEL_X_OFFSET
@@ -415,18 +417,39 @@ class BaxterMJCEnv(Env):
     def set_item_pose(self, name, pos, mujoco_frame=True):
         if not mujoco_frame:
             pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
+
+        item_type = 'joint'
         try:
             ind = self.physics.model.name2id(name, 'joint')
-            adr = self.physics.model.jnt_qposadr(ind)
+            adr = self.physics.model.jnt_qposadr[ind]
+            old_pos = self.physics.data.qpos[adr:adr+3]
             self.physics.data.qpos[adr:adr+3] = pos
-        except:
+        except Exception as e:
             try:
                 ind = self.physics.model.name2id(name, 'body')
+                old_pos = self.physics.data.xpos[ind]
                 self.physics.data.xpos[ind] = pos
-                self.physics.model.body_pos[ind] = pos
+                # self.physics.model.body_pos[ind] = pos
+                # old_pos = self.physics.model.body_pos[ind]
+                item_type = 'body'
             except:
-                pass
-        self.physics.forward()
+                item_type = 'unknown'
+
+        try:
+            self.physics.forward()
+        except PhysicsError as e:
+            print e
+            print '\n\n\n\nERROR IN SETTING {0} POSE.\nPOSE TYPE: {1}.\nRESETTING SIMULATION.\n\n\n\n'.format(name, item_type)
+            qpos = self.physics.data.qpos.copy()
+            xpos = self.physics.data.xpos.copy()
+            if item_type == 'joint':
+                qpos[adr:adr+3] = old_pos
+            elif item_type == 'body':
+                xpos[ind] = old_pos
+            self.physics.reset()
+            self.physics.data.qpos[:] = qpos[:]
+            self.physics.data.xpos[:] = xpos[:]
+            self.physics.forward()
 
 
     def get_pos_from_label(self, label, mujoco_frame=True):
@@ -835,7 +858,7 @@ class BaxterMJCEnv(Env):
             try:
                 self.physics.step()
             except PhysicsError as e:
-                print 'ERROR IN PHYSICS SIMULATION; RESETTING ENV.'
+                print '\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n'
                 self.physics.reset()
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
