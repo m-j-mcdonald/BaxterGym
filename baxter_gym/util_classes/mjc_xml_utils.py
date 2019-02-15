@@ -17,7 +17,7 @@ def get_param_xml(param):
         cloth_body = xml.Element('body', {'name': param.name})
         # cloth_geom = xml.SubElement(cloth_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':"0 0 1 1", 'friction':'1 1 1'})
         cloth_geom = xml.SubElement(cloth_body, 'geom', {'name': param.name, 'type':'sphere', 'size':"{}".format(radius), 'rgba':"0 0 1 1", 'mass': '0.01'})
-        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'1', 'diaginertia': '0.01 0.01 0.01'})
+        cloth_intertial = xml.SubElement(cloth_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
         free_body.append(cloth_body)
         return param.name, free_body, {}
 
@@ -88,6 +88,18 @@ def get_param_xml(param):
         return param.name, basket_body, {'contacts': []}
 
 
+def get_item_from_mesh(name, mesh_file, rgba="1 1 1 1"):
+    body = '''
+            <body name="free_body_{0}">
+                <freejoint name="{0}"/>
+                <body name="{0}">
+                    <geom type="mesh" mesh="{0}" rgba="{1}"/>
+                </body>
+            </body>
+           '''.format(name, rgba)
+    return name, xml.fromstring(body), {'assets': [xml.Element('mesh', {'name':name, 'file':mesh_file})]}
+
+
 def get_table():
     body = '''
             <body name="table" pos="0.5 0 -0.4875" euler="0 0 0">
@@ -127,7 +139,7 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
     return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
 
 
-def generate_xml(base_file, target_file, items, include=[]):
+def generate_xml(base_file, target_file, items, include_files=[], include_meshes=[], timestep=0.002):
     base_xml = xml.parse(base_file)
     root = base_xml.getroot()
     worldbody = root.find('worldbody')
@@ -138,6 +150,13 @@ def generate_xml(base_file, target_file, items, include=[]):
     compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/meshes')
     compiler_xml = xml.fromstring(compiler_str)
     root.append(compiler_xml)
+
+    option_str = '<option timestep="{0}"  gravity="0 0 -9.81" solver="Newton" noslip_iterations="0"/>'.format(timestep)
+    option_xml = xml.fromstring(option_str)
+    root.append(option_xml)
+
+    for name, f_name, color in include_meshes:
+        items.append(get_item_from_mesh(name, f_name, color))
 
     for name, item_body, tag_dict in items:
         worldbody.append(item_body)
@@ -150,7 +169,7 @@ def generate_xml(base_file, target_file, items, include=[]):
         if 'equality' in tag_dict:
             for eq in tag_dict['equality']:
                 equality.append(eq)
-    for f_name in include:
+    for f_name in include_files:
         worldbody.append(xml.fromstring('<include file="{0}" />'.format(f_name)))
 
     base_xml.write(target_file)

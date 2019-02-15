@@ -1,35 +1,35 @@
 <mujoco model="hsrb">
     <size njmax="795" nconmax="250" nstack="631875" />
-    <option timestep="0.002"  gravity="0 0 -9.81" solver="Newton" noslip_iterations="0" meshdir="meshes"/>
+    <option timestep="0.002"  gravity="0 0 -9.81" solver="Newton" noslip_iterations="0"/>
     <asset>
-        <mesh name="base_light" file="hsr/base_v2/base_light.stl"/>
-        <mesh name="body_light" file="hsr/base_v2/body_light.stl"/>
-        <mesh name="torso_base" file="hsr/base_v2/torso_base.stl"/>
-        <mesh name="base" file="hsr/base_v2/base.stl"/>
-        <mesh name="laser" file="hsr/sensors/laser.stl"/>
-        <mesh name="torso_light" file="hsr/torso_v0/torso_light.stl"/>
-        <mesh name="torso" file="hsr/torso_v0/torso.stl"/>
-        <mesh name="head_pan" file="hsr/head_v1/head_pan.stl"/>
-        <mesh name="head_upper" file="hsr/head_v1/head_upper.stl"/>
-        <mesh name="head_tilt" file="hsr/head_v1/head_tilt.stl"/>
-        <mesh name="tablet_base" file="hsr/head_v1/tablet_base.stl"/>
-        <mesh name="head" file="hsr/head_v1/head.stl"/>
-        <mesh name="tablet" file="hsr/head_v1/tablet.stl"/>
-        <mesh name="head_camera" file="hsr/sensors/head_camera.stl"/>
-        <mesh name="rgbd_light" file="hsr/sensors/rgbd_light.stl"/>
-        <mesh name="rgbd" file="hsr/sensors/rgbd.stl"/>
-        <mesh name="shoulder" file="hsr/arm_v0/shoulder.stl"/>
-        <mesh name="arm_flex_light" file="hsr/arm_v0/arm_flex_light.stl"/>
-        <mesh name="arm_flex" file="hsr/arm_v0/arm_flex.stl"/>
-        <mesh name="arm_roll_light" file="hsr/arm_v0/arm_roll_light.stl"/>
-        <mesh name="arm_roll" file="hsr/arm_v0/arm_roll.stl"/>
-        <mesh name="wrist_flex" file="hsr/wrist_v0/wrist_flex.stl"/>
-        <mesh name="wrist_roll" file="hsr/wrist_v0/wrist_roll.stl"/>
-        <mesh name="palm" file="hsr/hand_v0/palm.stl"/>
-        <mesh name="l_proximal" file="hsr/hand_v0/l_proximal.stl"/>
-        <mesh name="l_distal" file="hsr/hand_v0/l_distal.stl"/>
-        <mesh name="r_proximal" file="hsr/hand_v0/r_proximal.stl"/>
-        <mesh name="r_distal" file="hsr/hand_v0/r_distal.stl"/>
+        <mesh name="base_light" file="hsr/hsr_meshes/base_v2/base_light.stl"/>
+        <mesh name="body_light" file="hsr/hsr_meshes/base_v2/body_light.stl"/>
+        <mesh name="torso_base" file="hsr/hsr_meshes/base_v2/torso_base.stl"/>
+        <mesh name="base" file="hsr/hsr_meshes/base_v2/base.stl"/>
+        <mesh name="laser" file="hsr/hsr_meshes/sensors/laser.stl"/>
+        <mesh name="torso_light" file="hsr/hsr_meshes/torso_v0/torso_light.stl"/>
+        <mesh name="torso" file="hsr/hsr_meshes/torso_v0/torso.stl"/>
+        <mesh name="head_pan" file="hsr/hsr_meshes/head_v1/head_pan.stl"/>
+        <mesh name="head_upper" file="hsr/hsr_meshes/head_v1/head_upper.stl"/>
+        <mesh name="head_tilt" file="hsr/hsr_meshes/head_v1/head_tilt.stl"/>
+        <mesh name="tablet_base" file="hsr/hsr_meshes/head_v1/tablet_base.stl"/>
+        <mesh name="head" file="hsr/hsr_meshes/head_v1/head.stl"/>
+        <mesh name="tablet" file="hsr/hsr_meshes/head_v1/tablet.stl"/>
+        <mesh name="head_camera" file="hsr/hsr_meshes/sensors/head_camera.stl"/>
+        <mesh name="rgbd_light" file="hsr/hsr_meshes/sensors/rgbd_light.stl"/>
+        <mesh name="rgbd" file="hsr/hsr_meshes/sensors/rgbd.stl"/>
+        <mesh name="shoulder" file="hsr/hsr_meshes/arm_v0/shoulder.stl"/>
+        <mesh name="arm_flex_light" file="hsr/hsr_meshes/arm_v0/arm_flex_light.stl"/>
+        <mesh name="arm_flex" file="hsr/hsr_meshes/arm_v0/arm_flex.stl"/>
+        <mesh name="arm_roll_light" file="hsr/hsr_meshes/arm_v0/arm_roll_light.stl"/>
+        <mesh name="arm_roll" file="hsr/hsr_meshes/arm_v0/arm_roll.stl"/>
+        <mesh name="wrist_flex" file="hsr/hsr_meshes/wrist_v0/wrist_flex.stl"/>
+        <mesh name="wrist_roll" file="hsr/hsr_meshes/wrist_v0/wrist_roll.stl"/>
+        <mesh name="palm" file="hsr/hsr_meshes/hand_v0/palm.stl"/>
+        <mesh name="l_proximal" file="hsr/hsr_meshes/hand_v0/l_proximal.stl"/>
+        <mesh name="l_distal" file="hsr/hsr_meshes/hand_v0/l_distal.stl"/>
+        <mesh name="r_proximal" file="hsr/hsr_meshes/hand_v0/r_proximal.stl"/>
+        <mesh name="r_distal" file="hsr/hsr_meshes/hand_v0/r_distal.stl"/>
     </asset>
     <contact>
         <exclude body1="base_link" body2="arm_lift_link"/>
@@ -53,7 +53,7 @@
         <touch name="touchsensor_r" site="touchsensor_r_site"/>
     </sensor>
     <worldbody>
-        <light directional="false" cutoff="90" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5" ambient="0 0 0"/>
+        <light directional="false" cutoff="180" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="4 0 3.5" dir="-1 0 -2.5" ambient="0 0 0"/>
         <geom name="ground" type="plane" pos="0 0 0" size="4 4 .05" rgba="0.7 0.6 0.5 1"/>
         <camera name="overhead_cam" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
         <camera name="forward_cam" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" />
@@ -323,10 +323,10 @@
         <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"
                   forcelimited="true" forcerange="-15 35"
                   ctrllimited="true" ctrlrange="-1.2 -.5"/>
-        <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_roll_joint"
+        <position gear="1" kp="1000" name="arm_roll_motor" joint="arm_roll_joint"
                   forcelimited="true" forcerange="-15 35"
                   ctrllimited="true" ctrlrange="-2.09 3.84"/>
-        <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_flex_joint"
+        <position gear="1" kp="1000" name="wrist_flex_motor" joint="wrist_flex_joint"
                   forcelimited="true" forcerange="-20 20"
                   ctrllimited="true" ctrlrange="-1.92 1.22"/>
         <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint"

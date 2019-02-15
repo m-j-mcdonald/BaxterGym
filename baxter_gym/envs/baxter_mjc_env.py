@@ -92,8 +92,8 @@ _CAM_WIDTH = 200
 _CAM_HEIGHT = 150
 
 GRASP_THRESHOLD = np.array([0.05, 0.05, 0.025]) # np.array([0.01, 0.01, 0.03])
-MJC_TIME_DELTA = 0.002
-MJC_DELTAS_PER_STEP = int(1. // MJC_TIME_DELTA)
+# MJC_TIME_DELTA = 0.002
+# MJC_DELTAS_PER_STEP = int(1. // MJC_TIME_DELTA)
 N_CONTACT_LIMIT = 12
 
 START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
@@ -103,13 +103,14 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 class BaxterMJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=250, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_mesh_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), timestep=0.002, max_iter=250, view=False):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
 
         self.cur_time = 0.
         self.prev_time = 0.
+        self.timestep = timestep
 
         self.use_viewer = view
         self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
@@ -120,8 +121,23 @@ class BaxterMJCEnv(Env):
         self.im_wid, self.im_height = im_dims
         self.items = items
         self._item_map = {item[0]: item for item in items}
+        self.include_files = include_files
+        self.include_mesh_items = include_mesh_items
         self._set_obs_info(obs_include)
 
+        self._load_model()
+        self._init_control_info()
+
+        self._max_iter = max_iter
+        self._cur_iter = 0
+
+        if view:
+            self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
+        else:
+            self._viewer = None
+
+
+    def _init_control_info(self):
         self.ctrl_data = {}
         for joint in BAXTER_GAINS:
             self.ctrl_data[joint] = {
@@ -139,8 +155,6 @@ class BaxterMJCEnv(Env):
                 'cd': 0.,
                 'ci': 0.,
             }
-
-        self._load_model()
 
         if USE_OPENRAVE:
             env = openravepy.Environment()
@@ -160,17 +174,9 @@ class BaxterMJCEnv(Env):
             ('baxter', 'lGripper'): np.array([15]),
         }
 
-        self._max_iter = max_iter
-        self._cur_iter = 0
-
-        if view:
-            self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
-        else:
-            self._viewer = None
-
 
     def _load_model(self):
-        generate_xml(BASE_VEL_XML, ENV_XML, self.items)
+        generate_xml(BASE_VEL_XML, ENV_XML, self.items, self.include_files, self.include_mesh_items, timestep=self.timestep)
         self.physics = Physics.from_xml_path(ENV_XML)
 
 
@@ -850,12 +856,15 @@ class BaxterMJCEnv(Env):
                    False, \
                    {}
 
-        for t in range(MJC_DELTAS_PER_STEP / 4):
+        error_coeff = 7e1
+        for t in range(50): # range(int(1/(4*self.timestep))):
             error = abs_cmd - self.physics.data.qpos[1:19]
-            cmd = 7e1 * error
-            cmd[7] = 20 if r_grip > 0.0175 else -75
+            cmd =  error_coeff * error
+            # cmd[cmd > 0.25] = 0.25
+            # cmd[cmd < -0.25] = -0.25
+            cmd[7] = 50 if r_grip > 0.0165 else -100
             cmd[8] = -cmd[7]
-            cmd[16] = 20 if l_grip > 0.0175 else -75
+            cmd[16] = 50 if l_grip > 0.0165 else -100
             cmd[17] = -cmd[16]
             cur_state = self.physics.data.qpos.copy()
             self.physics.set_control(cmd)
