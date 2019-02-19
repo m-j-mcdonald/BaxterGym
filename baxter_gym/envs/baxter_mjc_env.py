@@ -103,7 +103,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 class BaxterMJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_mesh_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), timestep=0.002, max_iter=250, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_mesh_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -111,6 +111,7 @@ class BaxterMJCEnv(Env):
         self.cur_time = 0.
         self.prev_time = 0.
         self.timestep = timestep
+        self.sim_freq = sim_freq
 
         self.use_viewer = view
         self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
@@ -857,7 +858,7 @@ class BaxterMJCEnv(Env):
                    {}
 
         error_coeff = 7e1
-        for t in range(50): # range(int(1/(4*self.timestep))):
+        for t in range(self.sim_freq): # range(int(1/(4*self.timestep))):
             error = abs_cmd - self.physics.data.qpos[1:19]
             cmd =  error_coeff * error
             # cmd[cmd > 0.25] = 0.25

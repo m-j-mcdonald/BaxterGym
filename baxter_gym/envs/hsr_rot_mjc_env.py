@@ -1,0 +1,352 @@
+# import matplotlib as mpl
+# mpl.use('Qt4Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from threading import Thread
+import time
+import xml.etree.ElementTree as xml
+
+from tkinter import TclError
+
+# try:
+#     import openravepy
+#     from baxter_gym.util_classes.openrave_body import OpenRAVEBody
+#     from baxter_gym.robot_info.robots import Baxter
+#     USE_OPENRAVE = True
+# except:
+#     USE_OPENRAVE = False
+USE_OPENRAVE = False
+
+from dm_control import render
+from dm_control.mujoco import Physics
+from dm_control.viewer import gui
+from dm_control.viewer import renderer
+from dm_control.viewer import runtime
+from dm_control.viewer import user_input
+from dm_control.viewer import util
+from dm_control.viewer import viewer
+from dm_control.viewer import views
+
+from gym import spaces
+from gym.core import Env
+
+import baxter_gym
+from baxter_gym.envs import BaxterMJCEnv
+from baxter_gym.util_classes.ik_controller import BaxterIKController, HSRIKController
+from baxter_gym.util_classes.mjc_xml_utils import *
+from baxter_gym.util_classes import transform_utils as T
+
+
+BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/hsr_rot_model.xml'
+ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_hsr_rot_env.xml'
+
+
+MUJOCO_JOINT_ORDER = ["slide_x", "slide_y", "rotation", "arm_lift_joint", "arm_flex_joint", "arm_roll_joint", "wrist_flex_joint", "wrist_roll_joint", "hand_l_proximal_joint", "hand_r_proximal_joint"]
+
+
+_MAX_FRONTBUFFER_SIZE = 2048
+_CAM_WIDTH = 200
+_CAM_HEIGHT = 150
+
+GRASP_THRESHOLD = np.array([0.05, 0.05, 0.025]) # np.array([0.01, 0.01, 0.03])
+MJC_TIME_DELTA = 0.002
+MJC_DELTAS_PER_STEP = int(1. // MJC_TIME_DELTA)
+N_CONTACT_LIMIT = 12
+
+CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
+MUJOCO_MODEL_X_OFFSET = 0
+MUJOCO_MODEL_Z_OFFSET = 0
+
+
+class HSRRotMJCEnv(BaxterMJCEnv):
+    metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
+
+    def _init_control_info(self):
+        if USE_OPENRAVE:
+            env = openravepy.Environment()
+            self._ikbody = OpenRAVEBody(env, 'hsr', HSR())
+        else:
+            self._ikcontrol = HSRIKController(lambda: self.get_arm_joint_angles())
+
+        self.action_inds = {
+            ('hsr', 'pose'): np.array([0,1]),
+            ('hsr', 'rotation'): np.array([2]),
+            ('hsr', 'arm'): np.array(range(3,8)),
+            ('hsr', 'gripper'): np.array([8]),
+        }
+
+    def _set_obs_info(self, obs_include):
+        self._obs_inds = {}
+        self._obs_shape = {}
+        ind = 0
+        if 'overhead_image' in obs_include or not len(obs_include):
+            self._obs_inds['overhead_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['overhead_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'pos' in obs_include or not len(obs_include):
+            self._obs_inds['pos'] = (ind, ind+3)
+            self._obs_shape['pos'] = (3,)
+            ind += 3
+
+        if 'joints' in obs_include or not len(obs_include):
+            n_jnts = len(self.get_joint_angles())
+            self._obs_inds['joints'] = (ind, ind+n_jnts)
+            self._obs_shape['joints'] = (n_jnts,)
+            ind += n_jnts
+
+        if 'end_effector' in obs_include or not len(obs_include):
+            self._obs_inds['end_effector'] = (ind, ind+8)
+            self._obs_shape['end_effector'] = (8,)
+            ind += 8
+
+        for item, xml, info in self.items:
+            if item in obs_include or not len(obs_include):
+                self._obs_inds[item] = (ind, ind+3) # Only store 3d Position
+                self._obs_shape[item] = (3,)
+                ind += 3
+
+        self.dO = ind
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(ind,), dtype='float32')
+        return ind
+
+
+    def get_obs(self, obs_include=None):
+        obs = np.zeros(self.dO)
+        if obs_include is None:
+            obs_include = self.obs_include
+
+        if not len(obs_include) or 'overhead_image' in obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
+            inds = self._obs_inds['overhead_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(obs_include) or 'pos' in obs_include:
+            pos = self.get_base_pos()
+            inds = self._obs_inds['pos']
+            obs[inds[0]:inds[1]] = pos
+
+        if not len(obs_include) or 'joints' in obs_include:
+            jnts = self.get_joint_angles()
+            inds = self._obs_inds['joints']
+            obs[inds[0]:inds[1]] = jnts
+
+        if not len(obs_include) or 'end_effector' in obs_include:
+            inds = self._obs_inds['end_effector']
+            obs[inds[0]:inds[1]] = np.r_[self.get_ee_pos(), 
+                                         self.get_ee_rot(),
+                                         self.get_grip_jnts()[0]]
+
+        for item in self.items:
+            if not len(obs_include) or item[0] in obs_include:
+                inds = self._obs_inds[item[0]]
+                obs[inds[0]:inds[1]] = self.get_item_pose(item[0])
+
+        return np.array(obs)
+
+
+    def get_ee_pos(self, mujoco_frame=True):
+        model = self.physics.model
+        hand_ind = model.name2id('hand_site', 'site')
+        pos = self.physics.data.xpos[hand_ind]
+        if not mujoco_frame:
+            pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            pos[0] -= MUJOCO_MODEL_X_OFFSET
+        return pos 
+
+
+    def get_ee_rot(self):
+        model = self.physics.model
+        hand_ind = model.name2id('hand_site', 'site')
+        return self.physics.data.xquat[hand_ind].copy()
+
+
+    def get_joint_angles(self):
+        return self.physics.data.qpos[:9].copy()
+
+
+    def get_arm_joint_angles(self):
+        inds = [3,4,5,6,7]
+        return self.physics.data.qpos[inds]
+
+
+    def get_grip_jnts(self):
+        inds = [8,9]
+        return self.physics.data.qpos[inds]
+
+
+    def get_base_pos(self, mujoco_frame=True):
+        if 'hsr' in self._ind_cache:
+            ind = self._ind_cache['hsr']
+        else:
+            ind = self.physics.model.name2id('hsr', 'body')
+        pos = self.physics.data.xpos[ind].copy()
+        if not mujoco_frame:
+            pos[0] -= MUJOCO_MODEL_X_OFFSET
+            pos[2] -= MUJOCO_MODEL_Z_OFFSET
+        return pos
+
+
+    def get_base_theta(self, mujoco_frame=True):
+        return self.physics.data.qpos[2]
+
+
+    def get_base_dir(self, mujoco_frame=True):
+        return self.physics.data.qpos[2].copy()
+
+
+    def _get_joints(self, act_index):
+        if act_index in self._joint_map_cache:
+            return self._joint_map_cache[act_index]
+
+        res = []
+        for name, attr in self.action_inds:
+            inds = self.action_inds[name, attr]
+            # Actions have a single gripper command, but MUJOCO uses two gripper joints
+            if act_index in inds:
+                if attr == 'gripper':
+                    res = [('hand_l_proximal_joint', 1), ('hand_r_proximal_joint', 1)]
+                elif attr == 'arm':
+                    arm_ind = inds.tolist().index(act_index)
+                    res = [(MUJOCO_JOINT_ORDER[arm_ind], 1)]
+
+        self._joint_map_cache[act_index] = res
+        return res
+
+
+    def _calc_ik(self, pos, quat, check_limits=True):
+        arm_jnts = self.get_arm_joint_angles()
+        grip_jnts = self.get_grip_jnts()
+        if USE_OPENRAVE:
+
+            dof_map = {
+                'arm': arm_jnts,
+                'gripper': grip_jnts[0],
+            }
+
+            manip_name = 'hand'
+            trans = np.zeros((4, 4))
+            trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
+            trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
+            trans[3, 3] = 1
+
+            jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+
+        else:
+            cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
+            jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
+
+        if jnt_cmd is None:
+            print('Cannot complete action; ik will cause unstable control')
+            return arm_jnts
+
+        return jnt_cmd
+
+
+    def step(self, action, mode=None, obs_include=None, debug=False):
+        if mode is None:
+            mode = self.ctrl_mode
+
+        cmd = np.zeros((10))
+        abs_cmd = np.zeros((10))
+
+        grip = 0
+
+        if mode == 'joint_angle':
+            for i in range(len(action)):
+                jnts = self._get_joints(i)
+                for jnt in jnts:
+                    cmd_angle = jnt[1] * action[i]
+                    ind = MUJOCO_JOINT_ORDER.index(jnt[0])
+                    abs_cmd[ind] = cmd_angle
+            abs_cmd[:3] = action[:3]    
+            grip = action[8]    
+
+        elif mode == 'end_effector':
+            cur_ee_pos = self.get_ee_pos()
+            cur_ee_rot = self.get_ee_rot()
+            target_ee_pos = cur_ee_pos + action[2:5]
+            target_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            target_ee_rot = action[5:8]
+
+            cmd = self._calc_ik(target_ee_pos, 
+                                target_ee_rot)
+
+            abs_cmd[:3] = action[:3]
+            abs_cmd[4:8] = cmd
+            grip = action[8]
+
+        elif mode == 'end_effector_pos':
+            cur_ee_pos = self.get_ee_pos()
+            cur_ee_rot = self.get_ee_rot()
+            target_ee_pos = cur_ee_pos + action[2:5]
+            target_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
+            target_ee_rot = START_EE[5:9]
+
+            cmd = self._calc_ik(target_ee_pos, 
+                                target_ee_rot)
+
+            abs_cmd[:3] = action[:3]
+            abs_cmd[4:8] = cmd
+            grip = action[8]
+
+        elif mode == 'discrete_pos':
+            raise NotImplementedError
+            return self.get_obs(), \
+                   self.compute_reward(), \
+                   False, \
+                   {}
+
+        for t in range(MJC_DELTAS_PER_STEP / 4):
+            # error = abs_cmd - self.physics.data.qpos[1:19]
+            # cmd = 7e1 * error
+            cmd = abs_cmd
+            cmd[7] = grip
+            self.physics.set_control(cmd)
+            self.physics.step()
+
+        return self.get_obs(obs_include=obs_include), \
+               self.compute_reward(), \
+               self.is_done(), \
+               {}
+
+
+    def sim_from_plan(self, plan, t):
+        model  = self.physics.model
+        xpos = model.body_pos.copy()
+        xquat = model.body_quat.copy()
+        param = plan.params.values()
+
+        for param_name in plan.params:
+            param = plan.params[param_name]
+            if param.is_symbol(): continue
+            if param._type != 'Robot':
+                if param.name in self._ind_cache:
+                    param_ind = self._ind_cache[param.name]
+                else:
+                    try:
+                        param_ind = model.name2id(param.name, 'body')
+                    except:
+                        param_ind = -1
+                    self._ind_cache[param.name] = -1
+                if param_ind == -1: continue
+
+                pos = param.pose[:, t]
+                xpos[param_ind] = pos + np.array([MUJOCO_MODEL_X_OFFSET, 0, MUJOCO_MODEL_Z_OFFSET])
+                if hasattr(param, 'rotation'):
+                    rot = param.rotation[:, t]
+                    mat = OpenRAVEBody.transform_from_obj_pose([0,0,0], rot)[:3,:3]
+                    xquat[param_ind] = openravepy.quatFromRotationMatrix(mat)
+
+        self.physics.data.xpos[:] = xpos[:]
+        self.physics.data.xquat[:] = xquat[:]
+        model.body_pos[:] = xpos[:]
+        model.body_quat[:] = xquat[:]
+
+        hsr = plan.params['hsr']
+        self.physics.data.qpos[:2] = hsr.pose[:2, t]
+        self.physics.data.qpos[2:7] = hsr.arm[:, t]
+        self.physics.data.qpos[7] = hsr.gripper[:, t]
+
+        self.physics.forward()
