@@ -18,7 +18,10 @@ from tkinter import TclError
 #     USE_OPENRAVE = False
 USE_OPENRAVE = False
 
-from dm_control import render
+try:
+    from dm_control import render
+except:
+    from dm_control import _render as render
 from dm_control.mujoco import Physics
 from dm_control.viewer import gui
 from dm_control.viewer import renderer
