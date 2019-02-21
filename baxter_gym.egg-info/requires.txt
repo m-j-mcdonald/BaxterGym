@@ -1,5 +1,5 @@
 dm_control
-gym
+gym==0.10.9
 numpy
 matplotlib
-openravepy
+pybullet
