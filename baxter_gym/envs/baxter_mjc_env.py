@@ -19,7 +19,10 @@ try:
 except:
     USE_OPENRAVE = False
 
-from dm_control import render
+try:
+    from dm_control import render
+except:
+    from dm_control import _render as render
 from dm_control.mujoco import Physics
 from dm_control.rl.control import PhysicsError
 from dm_control.viewer import gui
@@ -423,7 +426,7 @@ class BaxterMJCEnv(Env):
         return rot
 
 
-    def set_item_pose(self, name, pos, mujoco_frame=True):
+    def set_item_pose(self, name, pos, mujoco_frame=True, forward=True):
         if not mujoco_frame:
             pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
 
@@ -444,7 +447,8 @@ class BaxterMJCEnv(Env):
             except:
                 item_type = 'unknown'
 
-        self.physics.forward()
+        if forward:
+            self.physics.forward()
         # try:
         #     self.physics.forward()
         # except PhysicsError as e:
