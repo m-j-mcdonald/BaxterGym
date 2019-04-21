@@ -189,13 +189,13 @@
                 <!--<inertial pos="0.051549 0.042438 -0.064145" quat="-0.111496 0.499152 -0.110462 0.852182" mass="1.27582"-->
                           <!--diaginertia="0.00909548 0.00799354 0.00328099"/>-->
                 <joint name="arm_lift_joint" pos="0 0 0" axis="0 0 1" type="slide" limited="true" damping="100"
-                       range="0 0.31" />
+                       range="0 0.69" />
                 <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="shoulder"/>
                 <geom type="mesh" mesh="shoulder"/>
                 <body name="arm_flex_link" pos="0.141 0.078 0">
                     <inertial pos="0.000632 0.006404 0.118529" quat="0.999966 -0.00826681 1.5355e-06 -1.33584e-06"
                               mass="1.33929" diaginertia="2.51222 2.51222 2.51222"/>
-                    <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="false" range="-1 0" damping="25"/>
+                    <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-2.62 0." damping="25"/>
                     <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_flex_light"/>
                     <geom type="mesh" mesh="arm_flex"/>
                     <body name="arm_roll_link" pos="0.005 0 0.345">
@@ -218,7 +218,7 @@
                                 <inertial pos="-0.001416 -0.001547 0.081689"
                                           quat="0.988073 0.0424396 -0.0351605 -0.143785"
                                           mass="0.761692" diaginertia="0.000811657 0.000766039 0.000449422"/>
-                                <joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" damping="15" limited="true" range="-1.57 1.57"/>
+                                <joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" damping="15" limited="true" range="-1.92 3.67"/>
                                        <!--range="-1.92 3.67" />-->
                                 <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="wrist_roll"/>
                                 <geom type="mesh" mesh="wrist_roll"/>
@@ -328,12 +328,13 @@
         <position gear="3" kp="300" name="rotation_motor" joint="rotation"
                   forcelimited="true" forcerange="-100 100"
                   ctrllimited="true" ctrlrange="-3.14 3.14"/>
+
         <position gear="5" kp="10" name="arm_lift_motor" joint="arm_lift_joint"
-                  forcelimited="true" forcerange="-20 20"
-                  ctrllimited="true" ctrlrange="2.3 4.1"/>
+                  forcelimited="true" forcerange="-100 100"
+                  ctrllimited="true" ctrlrange="0 0.69"/>
         <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"
                   forcelimited="true" forcerange="-15 35"
-                  ctrllimited="true" ctrlrange="-1.2 -.5"/>
+                  ctrllimited="true" ctrlrange="-2.62 0"/>
         <position gear="1" kp="1000" name="arm_roll_motor" joint="arm_roll_joint"
                   forcelimited="true" forcerange="-15 35"
                   ctrllimited="true" ctrlrange="-2.09 3.84"/>
@@ -342,13 +343,11 @@
                   ctrllimited="true" ctrlrange="-1.92 1.22"/>
         <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint"
                   forcelimited="true" forcerange="-20 20"
-                  ctrllimited="true" ctrlrange="-1.57 1.57"/>
-        <position gear="1" kp="1000" name="hand_l_proximal_motor" joint="hand_l_proximal_joint"
-                  forcelimited="true" forcerange="-20 20"
-                  ctrllimited="true" ctrlrange="0 0.349066"/>
-        <position gear="1" kp="1000" name="hand_r_proximal_motor" joint="hand_r_proximal_joint"
-                  forcelimited="true" forcerange="-20 20"
-                  ctrllimited="true" ctrlrange="0 0.349066"/>
+                  ctrllimited="true" ctrlrange="-1.92 3.67"/>
+        <motor name="hand_l_proximal_motor" joint="hand_l_proximal_joint"
+                  forcelimited="true" forcerange="-50 50"/>
+        <motor name="hand_r_proximal_motor" joint="hand_r_proximal_joint"
+                  forcelimited="true" forcerange="-50 50"/>
 
     </actuator>
 </mujoco>

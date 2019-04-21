@@ -36,16 +36,16 @@ from gym.core import Env
 
 import baxter_gym
 from baxter_gym.envs import BaxterMJCEnv
-from baxter_gym.util_classes.ik_controller import BaxterIKController, HSRIKController
+from baxter_gym.util_classes.ik_controller import BaxterIKController
 from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
 
 
-BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/hsr_rot_model.xml'
-ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_hsr_rot_env.xml'
+BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/hsr_model.xml'
+ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_hsr_env.xml'
 
 
-MUJOCO_JOINT_ORDER = ["slide_x", "slide_y", "rotation", "arm_lift_joint", "arm_flex_joint", "arm_roll_joint", "wrist_flex_joint", "wrist_roll_joint", "hand_l_proximal_joint", "hand_r_proximal_joint"]
+MUJOCO_JOINT_ORDER = ["slide_x", "slide_y", "arm_lift_joint", "arm_flex_joint", "arm_roll_joint", "wrist_flex_joint", "wrist_roll_joint", "hand_l_proximal_joint", "hand_r_proximal_joint"]
 
 
 _MAX_FRONTBUFFER_SIZE = 2048
@@ -62,22 +62,63 @@ MUJOCO_MODEL_X_OFFSET = 0
 MUJOCO_MODEL_Z_OFFSET = 0
 
 
-class HSRRotMJCEnv(BaxterMJCEnv):
+class HSRMJCEnv(BaxterMJCEnv):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def _init_control_info(self):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], cloth_info=None, im_dims=(_CAM_WIDTH, _CAM_HEIGHT), max_iter=250, view=False):
+        assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
+        self.ctrl_mode = mode
+        self.active = True
+
+        self.cur_time = 0.
+        self.prev_time = 0.
+
+        self.use_viewer = view
+        self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
+        self.obs_include = obs_include
+        self.include_files = include_files
+        self._joint_map_cache = {}
+        self._ind_cache = {}
+        self._cloth_present = cloth_info is not None
+        if self._cloth_present:
+            self.cloth_width = cloth_info['width']
+            self.cloth_length = cloth_info['length']
+            self.cloth_sphere_radius = cloth_info['radius']
+            self.cloth_spacing = cloth_info['spacing']
+
+        self.im_wid, self.im_height = im_dims
+        self.items = items
+        self._item_map = {item[0]: item for item in items}
+        self._set_obs_info(obs_include)
+        self._load_model()
+
         if USE_OPENRAVE:
             env = openravepy.Environment()
-            self._ikbody = OpenRAVEBody(env, 'hsr', HSR())
+            self._ikbody = OpenRAVEBody(env, 'baxter', Baxter())
         else:
-            self._ikcontrol = HSRIKController(lambda: self.get_arm_joint_angles())
+            self._ikcontrol = BaxterIKController(lambda: self.get_arm_joint_angles())
+
+        # Start joints with grippers pointing downward
 
         self.action_inds = {
             ('hsr', 'pose'): np.array([0,1]),
-            ('hsr', 'rotation'): np.array([2]),
-            ('hsr', 'arm'): np.array(range(3,8)),
-            ('hsr', 'gripper'): np.array([8]),
+            ('hsr', 'arm'): np.array(range(2,7)),
+            ('hsr', 'gripper'): np.array([7]),
         }
+
+        self._max_iter = max_iter
+        self._cur_iter = 0
+
+        if view:
+            self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
+        else:
+            self._viewer = None
+
+
+    def _load_model(self):
+        generate_xml(BASE_VEL_XML, ENV_XML, self.items, self.include_files)
+        self.physics = Physics.from_xml_path(ENV_XML)
+
 
     def _set_obs_info(self, obs_include):
         self._obs_inds = {}
@@ -89,15 +130,14 @@ class HSRRotMJCEnv(BaxterMJCEnv):
             ind += 3*self.im_wid*self.im_height
 
         if 'pos' in obs_include or not len(obs_include):
-            self._obs_inds['pos'] = (ind, ind+3)
-            self._obs_shape['pos'] = (3,)
-            ind += 3
+            self._obs_inds['pos'] = (ind, ind+2)
+            self._obs_shape['pos'] = (2,)
+            ind += 2
 
         if 'joints' in obs_include or not len(obs_include):
-            n_jnts = len(self.get_joint_angles())
-            self._obs_inds['joints'] = (ind, ind+n_jnts)
-            self._obs_shape['joints'] = (n_jnts,)
-            ind += n_jnts
+            self._obs_inds['joints'] = (ind, ind+7)
+            self._obs_shape['joints'] = (7,)
+            ind += 7
 
         if 'end_effector' in obs_include or not len(obs_include):
             self._obs_inds['end_effector'] = (ind, ind+8)
@@ -144,7 +184,7 @@ class HSRRotMJCEnv(BaxterMJCEnv):
         for item in self.items:
             if not len(obs_include) or item[0] in obs_include:
                 inds = self._obs_inds[item[0]]
-                obs[inds[0]:inds[1]] = self.get_item_pose(item[0])
+                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
 
         return np.array(obs)
 
@@ -170,12 +210,12 @@ class HSRRotMJCEnv(BaxterMJCEnv):
 
 
     def get_arm_joint_angles(self):
-        inds = [3,4,5,6,7]
+        inds = [2,3,4,5,6]
         return self.physics.data.qpos[inds]
 
 
     def get_grip_jnts(self):
-        inds = [8,9]
+        inds = [7,8]
         return self.physics.data.qpos[inds]
 
 
@@ -183,20 +223,12 @@ class HSRRotMJCEnv(BaxterMJCEnv):
         if 'hsr' in self._ind_cache:
             ind = self._ind_cache['hsr']
         else:
-            ind = self.physics.model.name2id('hsr', 'body')
-        pos = self.physics.data.xpos[ind].copy()
+            ind = self.physics.model.name2id('hsr')
+        pos = self.physics.model.body_pos[ind].copy()
         if not mujoco_frame:
             pos[0] -= MUJOCO_MODEL_X_OFFSET
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
         return pos
-
-
-    def get_base_theta(self, mujoco_frame=True):
-        return self.physics.data.qpos[2]
-
-
-    def get_base_dir(self, mujoco_frame=True):
-        return self.physics.data.qpos[2].copy()
 
 
     def _get_joints(self, act_index):
@@ -251,10 +283,11 @@ class HSRRotMJCEnv(BaxterMJCEnv):
         if mode is None:
             mode = self.ctrl_mode
 
-        cmd = np.zeros((10))
-        abs_cmd = np.zeros((10))
+        cmd = np.zeros((8))
+        abs_cmd = np.zeros((8))
 
-        grip = 0
+        r_grip = 0
+        l_grip = 0
 
         if mode == 'joint_angle':
             for i in range(len(action)):
@@ -263,8 +296,8 @@ class HSRRotMJCEnv(BaxterMJCEnv):
                     cmd_angle = jnt[1] * action[i]
                     ind = MUJOCO_JOINT_ORDER.index(jnt[0])
                     abs_cmd[ind] = cmd_angle
-            abs_cmd[:3] = action[:3]    
-            grip = action[8]    
+            r_grip = action[7]
+            l_grip = action[15]
 
         elif mode == 'end_effector':
             cur_ee_pos = self.get_ee_pos()
@@ -276,8 +309,8 @@ class HSRRotMJCEnv(BaxterMJCEnv):
             cmd = self._calc_ik(target_ee_pos, 
                                 target_ee_rot)
 
-            abs_cmd[:3] = action[:3]
-            abs_cmd[4:8] = cmd
+            abs_cmd[:2] = action[:2]
+            abs_cmd[2:7] = cmd
             grip = action[8]
 
         elif mode == 'end_effector_pos':
@@ -290,8 +323,8 @@ class HSRRotMJCEnv(BaxterMJCEnv):
             cmd = self._calc_ik(target_ee_pos, 
                                 target_ee_rot)
 
-            abs_cmd[:3] = action[:3]
-            abs_cmd[4:8] = cmd
+            abs_cmd[:2] = action[:2]
+            abs_cmd[2:7] = cmd
             grip = action[8]
 
         elif mode == 'discrete_pos':

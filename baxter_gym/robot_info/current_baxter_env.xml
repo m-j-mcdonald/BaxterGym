@@ -290,4 +290,4 @@
 
 </actuator>
 
-<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/robot_info/meshes" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" noslip_iterations="0" solver="Newton" timestep="0.002" /></mujoco>
+<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/dependencies/BaxterGym/baxter_gym/robot_info/meshes" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" noslip_iterations="0" solver="Newton" timestep="0.002" /></mujoco>

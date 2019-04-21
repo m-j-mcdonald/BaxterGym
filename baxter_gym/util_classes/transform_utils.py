@@ -54,6 +54,35 @@ _AXES2TUPLE = {
 _TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
 
 
+def euler_to_quaternion(roll, pitch, yaw, order="wxyz"):
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+    if order == "xyzw":
+        return [qx, qy, qz, qw]
+
+    return [qw, qx, qy, qz]
+
+
+def quaternion_to_euler(w, x, y, z):
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll = np.arctan2(t0, t1)
+
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch = np.arcsin(t2)
+
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw = np.arctan2(t3, t4)
+
+    return roll, pitch, yaw
+
+
 def convert_quat(q, to="xyzw"):
     """
     Converts quaternion from one convention to another.

@@ -88,16 +88,57 @@ def get_param_xml(param):
         return param.name, basket_body, {'contacts': []}
 
 
-def get_item_from_mesh(name, mesh_file, rgba="1 1 1 1"):
-    body = '''
-            <body name="free_body_{0}">
-                <freejoint name="{0}"/>
-                <body name="{0}">
-                    <geom type="mesh" mesh="{0}" rgba="{1}"/>
+def get_item_from_mesh(name, mesh_name, mesh_file=None, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False):
+    if is_fixed:
+        body == '''
+                <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
+                    <geom type="mesh" mesh="{1}" rgba="{9}" mass="{10}"/>
                 </body>
+               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass)     
+    else:
+        body = '''
+                <body name="free_body_{0}">
+                    <freejoint name="{0}"/>
+                    <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
+                        <geom type="mesh" mesh="{1}" rgba="{9}" mass="{10}"/>
+                    </body>
+                </body>
+               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass)
+               
+    if mesh_file is not None:
+        new_assets = {'assets': [xml.Element('mesh', {'name':name, 'file':mesh_file})]}
+    else:
+        new_assets = {}
+
+    return name, xml.fromstring(body), new_assets
+
+
+def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False):
+    size = ''
+    for d in dims:
+        size += "{0} ".format(d)
+
+    color = ''
+    for c in rgba:
+        color += "{0} ".format(c)
+
+    if is_fixed:
+        body = '''
+            <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
+                <geom type="{1}" size="{9}" rgba="{10}" mass="{11}"/>
             </body>
-           '''.format(name, rgba)
-    return name, xml.fromstring(body), {'assets': [xml.Element('mesh', {'name':name, 'file':mesh_file})]}
+           '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass)
+    else:
+        body = '''
+                <body name="free_body_{0}">
+                    <freejoint name="{0}"/>
+                    <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
+                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}"/>
+                    </body>
+                </body>
+               '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass)
+
+    return name, xml.fromstring(body), {}
 
 
 def get_table():
@@ -139,7 +180,46 @@ def get_deformable_cloth(width, length, spacing=0.1, radius=0.2, pos=(1.,0.,1.))
     return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
 
 
-def generate_xml(base_file, target_file, items, include_files=[], include_meshes=[], timestep=0.002):
+def get_rope(length, spacing=0.1, radius=0.2, pos=(1.,0.,1.), color="0.8 0.2 0.1 1"):
+    body =  '''
+                <body name="B0_0" pos="{0} {1} {2}">
+                    <freejoint />
+                    <composite type="rope" count="{3} {4} 1" spacing="{5}" flatinertia="0.01">
+                        <joint kind="main" armature="0.01"/>
+                        <geom type="sphere" size="{6}" mass="0.005" rgba="{7}"/>
+                    </composite>
+                </body>\n
+                '''.format(pos[0], pos[1], pos[2], length, width, spacing, radius, color)
+
+    xml_body = xml.fromstring(body)
+    texture = '<texture name="cloth" type="2d" file="cloth_4.png" />'
+    xml_texture = xml.fromstring(texture)
+
+    material = '<material name="cloth" texture="cloth" shininess="0.0" />'
+    xml_material = xml.fromstring(material)
+
+    return 'B0_0', xml_body, {'assets': [xml_texture, xml_material]}
+
+
+def generate_xml(base_file, target_file, items=[], include_files=[], include_items=[], timestep=0.002):
+    '''
+    Parameters:
+        base_file: path to where the base environment is defined
+        target_file: path to write the new environment to
+        items: list of (name, item_body, tag_dict) where:
+            name: item's name in the environment
+            item_body: mjcf definition of the item body
+            tag_dict: additional dicitonary of mjcf elements to include; keys are mjcf sections (one of assets, contacts, equality), values are mjcf elements to add
+        include_files: list of file names to include. Currently supports mjcf files (parsed into bodies) and stl files (parsed into mesh elements)
+        include_items: dictionary with keys (name, mesh_name, pos, quat, color) where:
+            name: name of item to be added
+            type: type of the item to be added (mesh, sphere, box)
+            mesh_name / dims: name of mesh to use as defined in the environment if mesh, otherwise dimensions of the item
+            pos (optional): 3D position of the item's origin as (x, y, z)
+            quat (optional): 4D quaternion representing the item's orientation ((1, 0, 0, 0) is unrotated)
+            color (optional): rgba value for the item
+        timestep: float representing the time delta mujoco takes at every step; use default unless the simulation is too slow (warning: large values lead to instability)
+    '''
     base_xml = xml.parse(base_file)
     root = base_xml.getroot()
     worldbody = root.find('worldbody')
@@ -155,8 +235,22 @@ def generate_xml(base_file, target_file, items, include_files=[], include_meshes
     option_xml = xml.fromstring(option_str)
     root.append(option_xml)
 
-    for name, f_name, color in include_meshes:
-        items.append(get_item_from_mesh(name, f_name, color))
+    for item_dict in include_items:
+        name = item_dict["name"]
+        item_type = item_dict["type"]
+        is_fixed = item_dict.get("is_fixed", False)
+        mass = item_dict.get("mass", 0.1)
+        pos = item_dict.get("pos", (0, 0, 0))
+        quat = item_dict.get("quat", (1, 0, 0, 0))
+        rgba = item_dict.get("rgba", (1, 1, 1, 1))
+
+        if item_type == "mesh":
+            mesh_name = item_dict["mesh_name"]   
+            items.append(get_item_from_mesh(name, mesh_name=mesh_name, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
+        else:
+            dims = item_dict["dimensions"]   
+            items.append(get_item(name, item_type=item_type, dims=dims, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
+
 
     for name, item_body, tag_dict in items:
         worldbody.append(item_body)
@@ -169,7 +263,48 @@ def generate_xml(base_file, target_file, items, include_files=[], include_meshes
         if 'equality' in tag_dict:
             for eq in tag_dict['equality']:
                 equality.append(eq)
+
     for f_name in include_files:
-        worldbody.append(xml.fromstring('<include file="{0}" />'.format(f_name)))
+        with open(f_name, 'r+') as f:
+            data = f.read()
+
+        if f_name.lower().endswith('.mjcf'):
+            elem = xml.fromstring(data)
+
+            compiler = elem.find('compiler')
+            size = elem.find('size')
+            options = elem.find('options')
+            if compiler is not None:
+                elem.remove(compiler)
+
+            if size is not None:
+                elem.remove(size)
+
+            if options is not None:
+                elem.remove(options)
+
+            body = elem.find('worldbody')
+            if body is not None:
+                body.tag = 'body' # Switch from woldbody to body
+            else:
+                body = elem.find('body')
+
+            name = elem.get('model')
+            body.set('name', name)
+            new_assets = elem.find('assets')
+            mesh = new_assets.find('mesh')
+            mesh_file = mesh.get('file')
+
+            path = f_name.rsplit('/', 1)[0]
+            mesh.set('file', path+'/'+mesh_file)
+
+            worldbody.append(body)
+            assets.append(list(new_assets))
+
+        elif f_name.lower().endswith('.stl'):
+            stripped_path = f_name.split('.')[0]
+            mesh_name = strippath.rsplit('/', 1)[-1]
+            elem = xml.Element('mesh', {'name':name, 'file':f_name})
+            assets.append(elem)
 
     base_xml.write(target_file)

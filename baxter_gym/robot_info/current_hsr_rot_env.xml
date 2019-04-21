@@ -1,6 +1,6 @@
 <mujoco model="hsrb">
     <size nconmax="250" njmax="795" nstack="631875" />
-    <option gravity="0 0 -9.81" noslip_iterations="0" solver="Newton" timestep="0.01" />
+    
     <asset>
         <mesh file="hsr/hsr_meshes/base_v2/base_light.stl" name="base_light" />
         <mesh file="hsr/hsr_meshes/base_v2/body_light.stl" name="body_light" />
@@ -30,7 +30,7 @@
         <mesh file="hsr/hsr_meshes/hand_v0/l_distal.stl" name="l_distal" />
         <mesh file="hsr/hsr_meshes/hand_v0/r_proximal.stl" name="r_proximal" />
         <mesh file="hsr/hsr_meshes/hand_v0/r_distal.stl" name="r_distal" />
-    <mesh file="hsr/teacup.stl" name="red_teacup" /><mesh file="hsr/teacup.stl" name="blue_teacup" /><mesh file="hsr/square_dish.stl" name="dish" /></asset>
+    </asset>
     <contact>
         <exclude body1="hsr" body2="arm_lift_link" />
         <exclude body1="arm_lift_link" body2="arm_flex_link" />
@@ -75,7 +75,7 @@
             <geom group="1" mesh="body_light" type="mesh" />
             <geom group="1" mesh="torso_base" type="mesh" />
             <geom mesh="base" type="mesh" />
-            <body name="base_roll_link" pos="0 0hsr">
+            <body name="base_roll_link" pos="0 0 0">
                 <inertial diaginertia="0.145076 0.0958414 0.0713624" mass="10.2394" pos="-0.019482 0.002191 0.071013" quat="-0.163088 0.695987 0.176074 0.676759" />
                 
                 <body name="base_r_drive_wheel_link" pos="-0.11 -0.133 0.04">
@@ -177,12 +177,12 @@
                   
                 
                           
-                <joint axis="0 0 1" damping="100" limited="true" name="arm_lift_joint" pos="0 0 0" range="0 0.31" type="slide" />
+                <joint axis="0 0 1" damping="100" limited="true" name="arm_lift_joint" pos="0 0 0" range="0 0.69" type="slide" />
                 <geom conaffinity="0" contype="0" group="1" mesh="shoulder" type="mesh" />
                 <geom mesh="shoulder" type="mesh" />
                 <body name="arm_flex_link" pos="0.141 0.078 0">
                     <inertial diaginertia="2.51222 2.51222 2.51222" mass="1.33929" pos="0.000632 0.006404 0.118529" quat="0.999966 -0.00826681 1.5355e-06 -1.33584e-06" />
-                    <joint axis="0 -1 0" damping="25" limited="false" name="arm_flex_joint" pos="0 0 0" range="-1 0" />
+                    <joint axis="0 -1 0" damping="25" limited="true" name="arm_flex_joint" pos="0 0 0" range="-2.62 0." />
                     <geom conaffinity="0" contype="0" group="1" mesh="arm_flex_light" type="mesh" />
                     <geom mesh="arm_flex" type="mesh" />
                     <body name="arm_roll_link" pos="0.005 0 0.345">
@@ -198,7 +198,7 @@
                             <geom pos="0 0 0.03" rgba="0.33 0.33 0.33 1" size="0.017 0.02" type="cylinder" />
                             <body name="wrist_roll_link" pos="0 0 0">
                                 <inertial diaginertia="0.000811657 0.000766039 0.000449422" mass="0.761692" pos="-0.001416 -0.001547 0.081689" quat="0.988073 0.0424396 -0.0351605 -0.143785" />
-                                <joint axis="0 0 1" damping="15" limited="true" name="wrist_roll_joint" pos="0 0 0" range="-1.57 1.57" />
+                                <joint axis="0 0 1" damping="15" limited="true" name="wrist_roll_joint" pos="0 0 0" range="-1.92 3.67" />
                                        
                                 <geom conaffinity="0" contype="0" group="1" mesh="wrist_roll" type="mesh" />
                                 <geom mesh="wrist_roll" type="mesh" />
@@ -280,33 +280,24 @@
                 </body>
             </body>
         </body>
-    <body name="free_body_red_teacup">
-                <freejoint name="red_teacup" />
-                <body name="red_teacup">
-                    <geom mesh="red_teacup" rgba="1 0 0 1" type="mesh" />
-                </body>
-            </body><body name="free_body_blue_teacup">
-                <freejoint name="blue_teacup" />
-                <body name="blue_teacup">
-                    <geom mesh="blue_teacup" rgba="0 0 1 1" type="mesh" />
-                </body>
-            </body><body name="free_body_dish">
-                <freejoint name="dish" />
-                <body name="dish">
-                    <geom mesh="dish" rgba="0 1 0 1" type="mesh" />
-                </body>
-            </body><include file="../local/hsr_apartment/28_tidy.mjcf" /><include file="../local/hsr_apartment/21_tidy.mjcf" /><include file="../local/hsr_apartment/39_tidy.mjcf" /><include file="../local/hsr_apartment/27_tidy.mjcf" /><include file="../local/hsr_apartment/31_tidy.mjcf" /><include file="../local/hsr_apartment/33_tidy.mjcf" /><include file="../local/hsr_apartment/40_tidy.mjcf" /><include file="../local/hsr_apartment/37_tidy.mjcf" /><include file="../local/hsr_apartment/29_tidy.mjcf" /><include file="../local/hsr_apartment/30_tidy.mjcf" /><include file="../local/hsr_apartment/18_tidy.mjcf" /><include file="../local/hsr_apartment/24_tidy.mjcf" /><include file="../local/hsr_apartment/11_tidy.mjcf" /><include file="../local/hsr_apartment/10_tidy.mjcf" /><include file="../local/hsr_apartment/3_tidy.mjcf" /><include file="../local/hsr_apartment/41_tidy.mjcf" /><include file="../local/hsr_apartment/32_tidy.mjcf" /><include file="../local/hsr_apartment/16_tidy.mjcf" /><include file="../local/hsr_apartment/38_tidy.mjcf" /><include file="../local/hsr_apartment/1_tidy.mjcf" /><include file="../local/hsr_apartment/26_tidy.mjcf" /><include file="../local/hsr_apartment/8_tidy.mjcf" /><include file="../local/hsr_apartment/44_tidy.mjcf" /><include file="../local/hsr_apartment/6_tidy.mjcf" /><include file="../local/hsr_apartment/0_tidy.mjcf" /><include file="../local/hsr_apartment/14_tidy.mjcf" /><include file="../local/hsr_apartment/7_tidy.mjcf" /><include file="../local/hsr_apartment/12_tidy.mjcf" /><include file="../local/hsr_apartment/17_tidy.mjcf" /><include file="../local/hsr_apartment/22_tidy.mjcf" /><include file="../local/hsr_apartment/5_tidy.mjcf" /><include file="../local/hsr_apartment/25_tidy.mjcf" /><include file="../local/hsr_apartment/9_tidy.mjcf" /><include file="../local/hsr_apartment/23_tidy.mjcf" /><include file="../local/hsr_apartment/4_tidy.mjcf" /><include file="../local/hsr_apartment/15_tidy.mjcf" /><include file="../local/hsr_apartment/42_tidy.mjcf" /><include file="../local/hsr_apartment/2_tidy.mjcf" /><include file="../local/hsr_apartment/19_tidy.mjcf" /><include file="../local/hsr_apartment/13_tidy.mjcf" /><include file="../local/hsr_apartment/36_tidy.mjcf" /><include file="../local/hsr_apartment/20_tidy.mjcf" /></worldbody>
+    <body name="free_body_box1">
+                    <freejoint name="box1" />
+                    <body name="box1" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="0.1" rgba="1 1 1 1 " size="0.1 0.1 0.1 " type="box" />
+                    </body>
+                </body></worldbody>
     <actuator>
         <position ctrllimited="true" ctrlrange="-5 5" forcelimited="true" forcerange="-100 100" gear="3" joint="slide_x" kp="300" name="slide_x_motor" />
         <position ctrllimited="true" ctrlrange="-5 5" forcelimited="true" forcerange="-100 100" gear="3" joint="slide_y" kp="300" name="slide_y_motor" />
         <position ctrllimited="true" ctrlrange="-3.14 3.14" forcelimited="true" forcerange="-100 100" gear="3" joint="rotation" kp="300" name="rotation_motor" />
-        <position ctrllimited="true" ctrlrange="2.3 4.1" forcelimited="true" forcerange="-20 20" gear="5" joint="arm_lift_joint" kp="10" name="arm_lift_motor" />
-        <position ctrllimited="true" ctrlrange="-1.2 -.5" forcelimited="true" forcerange="-15 35" gear="1" joint="arm_flex_joint" kp="1000" name="arm_flex_motor" />
+
+        <position ctrllimited="true" ctrlrange="0 0.69" forcelimited="true" forcerange="-100 100" gear="5" joint="arm_lift_joint" kp="10" name="arm_lift_motor" />
+        <position ctrllimited="true" ctrlrange="-2.62 0" forcelimited="true" forcerange="-15 35" gear="1" joint="arm_flex_joint" kp="1000" name="arm_flex_motor" />
         <position ctrllimited="true" ctrlrange="-2.09 3.84" forcelimited="true" forcerange="-15 35" gear="1" joint="arm_roll_joint" kp="1000" name="arm_roll_motor" />
         <position ctrllimited="true" ctrlrange="-1.92 1.22" forcelimited="true" forcerange="-20 20" gear="1" joint="wrist_flex_joint" kp="1000" name="wrist_flex_motor" />
-        <position ctrllimited="true" ctrlrange="-1.57 1.57" forcelimited="true" forcerange="-20 20" gear="1" joint="wrist_roll_joint" kp="1000" name="wrist_roll_motor" />
-        <position ctrllimited="true" ctrlrange="0 0.349066" forcelimited="true" forcerange="-20 20" gear="1" joint="hand_l_proximal_joint" kp="1000" name="hand_l_proximal_motor" />
-        <position ctrllimited="true" ctrlrange="0 0.349066" forcelimited="true" forcerange="-20 20" gear="1" joint="hand_r_proximal_joint" kp="1000" name="hand_r_proximal_motor" />
+        <position ctrllimited="true" ctrlrange="-1.92 3.67" forcelimited="true" forcerange="-20 20" gear="1" joint="wrist_roll_joint" kp="1000" name="wrist_roll_motor" />
+        <motor forcelimited="true" forcerange="-50 50" joint="hand_l_proximal_joint" name="hand_l_proximal_motor" />
+        <motor forcelimited="true" forcerange="-50 50" joint="hand_r_proximal_joint" name="hand_r_proximal_motor" />
 
     </actuator>
-<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/robot_info/meshes" strippath="false" texturedir="textures/" /></mujoco>
+<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/dependencies/BaxterGym/baxter_gym/robot_info/meshes" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" noslip_iterations="0" solver="Newton" timestep="0.002" /></mujoco>

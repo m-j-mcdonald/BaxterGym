@@ -16,14 +16,16 @@ try:
     import pybullet as p
 except ImportError:
     raise Exception(
-        "Please make sure pybullet is installed. Run `pip install pybullet==1.9.5`"
+        "Please make sure pybullet is installed. Run `pip install pybullet`"
     )
 
 import baxter_gym
 from baxter_gym.util_classes import transform_utils as T
 
 
-class BaxterIKController(object):
+# ndof = 45
+
+class HSRIKController(object):
     """
     Inverse kinematics for the Baxter robot, using Pybullet and the urdf description
     files.
@@ -41,34 +43,26 @@ class BaxterIKController(object):
         self.robot_jpos_getter = robot_jpos_getter
         self.use_rot_mat = use_rot_mat
 
-        path = baxter_gym.__path__[0] + "/robot_info/baxter/baxter_description/urdf/baxter_mod.urdf"
+        path = baxter_gym.__path__[0] + "/robot_info/hsr/simple_hsrb4s.urdf"
         self.setup_inverse_kinematics(path)
 
         self.commanded_joint_positions = robot_jpos_getter()
 
         self.sync_state()
 
-    def get_control(self, right, left):
+    def get_control(self, arm):
         """
         Returns joint velocities to control the robot after the target end effector 
         positions and orientations are updated from arguments @left and @right.
 
         Args:
-            left (dict): A dictionary to control the left end effector with these keys.
+            aem (dict): A dictionary to control the end effector with these keys.
 
                 dpos (numpy array): a 3 dimensional array corresponding to the desired
-                    change in x, y, and z left end effector position.
+                    change in x, y, and z end effector position.
 
                 rotation (numpy array): a rotation matrix of shape (3, 3) corresponding
                     to the desired orientation of the left end effector.
-
-            right (dict): A dictionary to control the left end effector with these keys.
-
-                dpos (numpy array): a 3 dimensional array corresponding to the desired
-                    change in x, y, and z right end effector position.
-
-                rotation (numpy array): a rotation matrix of shape (3, 3) corresponding
-                    to the desired orientation of the right end effector.
 
         Returns:
             velocities (numpy array): a flat array of joint velocity commands to apply
@@ -81,7 +75,7 @@ class BaxterIKController(object):
 
         # Compute target joint positions
         self.commanded_joint_positions = self.joint_positions_for_eef_command(
-            right, left
+            arm
         )
 
         # P controller from joint positions (from IK) to velocities
@@ -110,12 +104,10 @@ class BaxterIKController(object):
         self.sync_ik_robot(self.robot_jpos_getter())
 
         # make sure target pose is up to date
-        pos_r, orn_r, pos_l, orn_l = self.ik_robot_eef_joint_cartesian_pose()
+        pos, orn = self.ik_robot_eef_joint_cartesian_pose()
 
-        self.ik_robot_target_pos_right = pos_r
-        self.ik_robot_target_orn_right = orn_r
-        self.ik_robot_target_pos_left = pos_l
-        self.ik_robot_target_orn_left = orn_l
+        self.ik_robot_target_pos = pos
+        self.ik_robot_target_orn = orn
 
     def setup_inverse_kinematics(self, urdf_path):
         """
@@ -125,8 +117,7 @@ class BaxterIKController(object):
         """
 
         # These indices come from the urdf file we're using
-        self.effector_right = 27
-        self.effector_left = 45
+        self.effector = 31
 
         # Use PyBullet to handle inverse kinematics.
         # Set up a connection to the PyBullet simulator.
@@ -137,7 +128,7 @@ class BaxterIKController(object):
 
         # Relevant joints we care about. Many of the joints are fixed and don't count, so
         # we need this second map to use the right ones.
-        self.actual = [13, 14, 15, 16, 17, 19, 20, 31, 32, 33, 34, 35, 37, 38]
+        self.actual = [23, 24, 25, 26, 27]
 
         self.num_joints = p.getNumJoints(self.ik_robot)
         n = p.getNumJoints(self.ik_robot)
@@ -194,7 +185,7 @@ class BaxterIKController(object):
         to the base frame as a (pos, orn) tuple where orn is a x-y-z-w quaternion.
         """
         out = []
-        for eff in [self.effector_right, self.effector_left]:
+        for eff in [self.effector]:
             eef_pos_in_world = np.array(p.getLinkState(self.ik_robot, eff)[0])
             eef_orn_in_world = np.array(p.getLinkState(self.ik_robot, eff)[1])
             eef_pose_in_world = T.pose2mat((eef_pos_in_world, eef_orn_in_world))
@@ -219,7 +210,6 @@ class BaxterIKController(object):
         self,
         target_position,
         target_orientation,
-        use_right,
         rest_poses,
     ):
         """
@@ -236,38 +226,20 @@ class BaxterIKController(object):
             A list of size @num_joints corresponding to the joint angle solution.
         """
 
-        ndof = 48
 
-        if use_right:
-            ik_solution = list(
-                p.calculateInverseKinematics(
-                    self.ik_robot,
-                    self.effector_right,
-                    target_position,
-                    targetOrientation=target_orientation,
-                    restPoses=rest_poses[:7],
-                    lowerLimits=self.lower,
-                    upperLimits=self.upper,
-                    jointRanges=self.ranges,
-                    jointDamping=[0.1] * ndof,
-                )
+        ik_solution = list(
+            p.calculateInverseKinematics(
+                self.ik_robot,
+                self.effector,
+                target_position,
+                targetOrientation=target_orientation,
+                restPoses=rest_poses[:7],
+                lowerLimits=self.lower,
+                upperLimits=self.upper,
+                jointRanges=self.ranges,
             )
-            return ik_solution[1:8]
-        else:
-            ik_solution = list(
-                p.calculateInverseKinematics(
-                    self.ik_robot,
-                    self.effector_left,
-                    target_position,
-                    targetOrientation=target_orientation,
-                    restPoses=rest_poses[7:],
-                    lowerLimits=self.lower,
-                    upperLimits=self.upper,
-                    jointRanges=self.ranges,
-                    jointDamping=[0.1] * ndof,
-                )
-            )
-            return ik_solution[8:15]
+        )
+        return ik_solution
 
     def bullet_base_pose_to_world_pose(self, pose_in_base):
         """
@@ -290,7 +262,7 @@ class BaxterIKController(object):
         )
         return T.mat2pose(pose_in_world)
 
-    def joint_positions_for_eef_command(self, cmd, use_right):
+    def joint_positions_for_eef_command(self, cmd):
         """
         This function runs inverse kinematics to back out target joint positions
         from the provided end effector command.
@@ -301,38 +273,26 @@ class BaxterIKController(object):
 
         dpos = cmd["dpos"]
         rotation = cmd["rotation"]
-        if use_right:
-            self.target_pos_right = self.ik_robot_target_pos_right #+ np.array([0, 0, 0.913])
-            self.ik_robot_target_pos_right = dpos # += dpos
-            self.ik_robot_target_orn_right = rotation
-            world_targets = self.bullet_base_pose_to_world_pose(
-                (self.ik_robot_target_pos_right, self.ik_robot_target_orn_right)
-            )
-        else:
-            self.target_pos_left = self.ik_robot_target_pos_left #+ np.array([0, 0, 0.913])
-            self.ik_robot_target_pos_left = dpos # += dpos
-            self.ik_robot_target_orn_left = rotation
-            world_targets = self.bullet_base_pose_to_world_pose(
-                (self.ik_robot_target_pos_left, self.ik_robot_target_orn_left)
-            )
+        self.target_pos = self.ik_robot_target_pos #+ np.array([0, 0, 0.913])
+        self.ik_robot_target_pos = dpos # += dpos
+        self.ik_robot_target_orn = rotation
+        world_targets = self.bullet_base_pose_to_world_pose(
+            (self.ik_robot_target_pos, self.ik_robot_target_orn)
+        )
+
 
         # convert from target pose in base frame to target pose in bullet world frame
         
 
-        # Empirically, more iterations aren't needed, and it's faster
+        # New pybullet iterates to convergence, so no need for multiple ik calls
         for _ in range(1):
             rest_poses = self.robot_jpos_getter()
             arm_joint_pos = self.inverse_kinematics(
                 world_targets[0],
                 world_targets[1],
-                use_right,
                 rest_poses=rest_poses,
             )
-            if use_right: 
-                both_arm_joint_pos = np.r_[arm_joint_pos, rest_poses[7:]]
-            else:
-                both_arm_joint_pos = np.r_[rest_poses[:7], arm_joint_pos]
-            self.sync_ik_robot(both_arm_joint_pos, sync_last=True)
+            self.sync_ik_robot(arm_joint_pos, sync_last=True)
 
         return arm_joint_pos
 

@@ -25,7 +25,7 @@ IMAGE_HEIGHT = 64
 
 
 class BaxterClothEnv(BaxterMJCEnv):
-    def __init__(self, cloth_info, cloth_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), view=True):
+    def __init__(self, cloth_info, cloth_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), mode='end_effector_pos', view=True):
         self.action_space = spaces.Box(low=-0.5, high=0.5, shape=(8,))
         cloth = get_deformable_cloth(cloth_info['width'], 
                                      cloth_info['length'], 
@@ -38,7 +38,7 @@ class BaxterClothEnv(BaxterMJCEnv):
         self.cloth_sphere_radius = cloth_info['radius']
         self.cloth_spacing = cloth_info['spacing']
         self.cloth_info = cloth_info
-        super(BaxterClothEnv, self).__init__(mode='end_effector_pos', 
+        super(BaxterClothEnv, self).__init__(mode=mode, 
                                              items=[cloth], 
                                              obs_include=obs_include,
                                              im_dims=im_dims,
@@ -369,10 +369,10 @@ class BaxterClothEnv(BaxterMJCEnv):
         ee_right_pos = self.get_right_ee_pos()
         ee_left_pos = self.get_left_ee_pos()
 
-        corner1 = self.get_item_pose('B0_0')
-        corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
-        corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-        corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
+        corner1 = self.get_item_pos('B0_0')
+        corner2 = self.get_item_pos('B0_{0}'.format(self.cloth_width-1))
+        corner3 = self.get_item_pos('B{0}_0'.format(self.cloth_length-1))
+        corner4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
         corners = [corner1, corner2, corner3, corner4]
 
 
@@ -382,22 +382,22 @@ class BaxterClothEnv(BaxterMJCEnv):
         if ONE_FOLD in state:
             reward += 5e3
             if self.cloth_length % 2:
-                mid1 = self.get_item_pose('B{0}_0'.format(self.cloth_length // 2))
-                mid2 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length // 2, self.cloth_width-1))
+                mid1 = self.get_item_pos('B{0}_0'.format(self.cloth_length // 2))
+                mid2 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length // 2, self.cloth_width-1))
             else:
-                mid1 = (self.get_item_pose('B{0}_0'.format(self.cloth_length // 2)-1) \
-                        + self.get_item_pose('B{0}_0'.format(self.cloth_length // 2))) / 2.0
-                mid2 = (self.get_item_pose('B{0}_{1}'.format(self.cloth_length // 2 - 1, self.cloth_width-1)) \
-                        + self.get_item_pose('B{0}_{1}'.format(self.cloth_length // 2, self.cloth_width-1))) / 2.0
+                mid1 = (self.get_item_pos('B{0}_0'.format(self.cloth_length // 2)-1) \
+                        + self.get_item_pos('B{0}_0'.format(self.cloth_length // 2))) / 2.0
+                mid2 = (self.get_item_pos('B{0}_{1}'.format(self.cloth_length // 2 - 1, self.cloth_width-1)) \
+                        + self.get_item_pos('B{0}_{1}'.format(self.cloth_length // 2, self.cloth_width-1))) / 2.0
 
             if self.cloth_width % 2:
-                mid3 = self.get_item_pose('B0_{0}'.format(self.cloth_width // 2))
-                mid4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2))
+                mid3 = self.get_item_pos('B0_{0}'.format(self.cloth_width // 2))
+                mid4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2))
             else:
-                mid3 = (self.get_item_pose('B0_{0}'.format(self.cloth_width // 2)-1) \
-                        + self.get_item_pose('B0_{0}'.format(self.cloth_width // 2))) / 2.0
-                mid4 = (self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2 - 1)) \
-                        + self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2))) / 2.0
+                mid3 = (self.get_item_pos('B0_{0}'.format(self.cloth_width // 2)-1) \
+                        + self.get_item_pos('B0_{0}'.format(self.cloth_width // 2))) / 2.0
+                mid4 = (self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2 - 1)) \
+                        + self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width // 2))) / 2.0
 
             min_dist = min([
                             np.linalg.norm(corner1-ee_left_pos) + np.linalg.norm(mid3-ee_right_pos),
@@ -416,10 +416,10 @@ class BaxterClothEnv(BaxterMJCEnv):
             right_corner = min(corners, key=lambda c: np.linalg.norm(ee_right_pos-c))
             left_corner = min(corners, key=lambda c: np.linalg.norm(ee_left_pos-c))
 
-            mid5 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
-            mid6 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
-            mid7 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
-            mid8 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
+            mid5 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
+            mid6 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
+            mid7 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
+            mid8 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
             min_dist = min([
                             np.linalg.norm(corner1-ee_left_pos) + np.linalg.norm(corner3-ee_right_pos),
                             np.linalg.norm(corner1-ee_right_pos) + np.linalg.norm(corner3-ee_left_pos),
@@ -485,25 +485,25 @@ class BaxterClothEnv(BaxterMJCEnv):
         state = []
 
         # Check full fold
-        corner1 = self.get_item_pose('B0_0')
-        corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
-        corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-        corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
+        corner1 = self.get_item_pos('B0_0')
+        corner2 = self.get_item_pos('B0_{0}'.format(self.cloth_width-1))
+        corner3 = self.get_item_pos('B{0}_0'.format(self.cloth_length-1))
+        corner4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
 
         corners = [corner1, corner2, corner3, corner4]
         check1 = all([all([np.max(np.abs(corners[i][:2] - corners[j][:2])) < 0.04 for j in range(i+1, 4)]) for i in range(4)])
 
-        mid1 = self.get_item_pose('B{0}_0'.format(int((self.cloth_length - 1.5) // 2)))
-        mid2 = self.get_item_pose('B{0}_0'.format(int((self.cloth_length + 1.5) // 2)))
-        mid3 = self.get_item_pose('B{0}_{1}'.format(int((self.cloth_length - 1.5) // 2), self.cloth_width-1))
-        mid4 = self.get_item_pose('B{0}_{1}'.format(int((self.cloth_length + 1.5) // 2), self.cloth_width-1))
+        mid1 = self.get_item_pos('B{0}_0'.format(int((self.cloth_length - 1.5) // 2)))
+        mid2 = self.get_item_pos('B{0}_0'.format(int((self.cloth_length + 1.5) // 2)))
+        mid3 = self.get_item_pos('B{0}_{1}'.format(int((self.cloth_length - 1.5) // 2), self.cloth_width-1))
+        mid4 = self.get_item_pos('B{0}_{1}'.format(int((self.cloth_length + 1.5) // 2), self.cloth_width-1))
         mids = [mid1, mid2, mid3, mid4]
         check2 = all([all([np.max(np.abs(mids[i][:2] - mids[j][:2])) < 0.04 for j in range(i+1, 4)]) for i in range(4)])
 
-        mid5 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
-        mid6 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
-        mid7 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
-        mid8 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
+        mid5 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
+        mid6 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
+        mid7 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
+        mid8 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
         mids = [mid5, mid6, mid7, mid8]
         check2 = all([all([np.max(np.abs(mids[i][:2] - mids[j][:2])) < 0.04 for j in range(i+1, 4)]) for i in range(4)])
 
@@ -514,20 +514,20 @@ class BaxterClothEnv(BaxterMJCEnv):
         if check1 and check2 and check3: state.append(TWO_FOLD)
 
         # Check length-wise fold
-        corner1 = self.get_item_pose('B0_0')
-        corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
+        corner1 = self.get_item_pos('B0_0')
+        corner2 = self.get_item_pos('B0_{0}'.format(self.cloth_width-1))
         check1 = np.max(np.abs(corner1[:2] - corner2[:2])) < 0.04
 
-        mid1 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
-        mid2 = self.get_item_pose('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
+        mid1 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width - 1.5) // 2)))
+        mid2 = self.get_item_pos('B0_{0}'.format(int((self.cloth_width + 1.5) // 2)))
         check2 = np.max(np.abs(mid1[:2] - mid2[:2])) < 0.02
 
-        corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-        corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
+        corner3 = self.get_item_pos('B{0}_0'.format(self.cloth_length-1))
+        corner4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
         check3 = np.max(np.abs(corner3[:2] - corner4[:2])) < 0.04
 
-        mid3 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
-        mid4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
+        mid3 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width - 1.5) // 2)))
+        mid4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, int((self.cloth_width + 1.5) // 2)))
         check4 = np.max(np.abs(mid3[:2] - mid4[:2])) < 0.04
 
         check5 = np.linalg.norm(corner1[:2] - mid1[:2]) > 0.75 * self.cloth_spacing and \
@@ -536,10 +536,10 @@ class BaxterClothEnv(BaxterMJCEnv):
         if check1 and check2 and check3 and check4 and check5: state.append(ONE_FOLD)
 
         # Check twist-fold
-        corner1 = self.get_item_pose('B0_0')
-        corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
-        corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-        corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
+        corner1 = self.get_item_pos('B0_0')
+        corner2 = self.get_item_pos('B0_{0}'.format(self.cloth_width-1))
+        corner3 = self.get_item_pos('B{0}_0'.format(self.cloth_length-1))
+        corner4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
 
         dist1 = np.linalg.norm(corner1 - corner4)
         dist2 = np.linalg.norm(corner2 - corner3)
@@ -559,10 +559,10 @@ class BaxterClothEnv(BaxterMJCEnv):
 
 
         # Check two corner grasp
-        corner1 = self.get_item_pose('B0_0')
-        corner2 = self.get_item_pose('B0_{0}'.format(self.cloth_width-1))
-        corner3 = self.get_item_pose('B{0}_0'.format(self.cloth_length-1))
-        corner4 = self.get_item_pose('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
+        corner1 = self.get_item_pos('B0_0')
+        corner2 = self.get_item_pos('B0_{0}'.format(self.cloth_width-1))
+        corner3 = self.get_item_pos('B{0}_0'.format(self.cloth_length-1))
+        corner4 = self.get_item_pos('B{0}_{1}'.format(self.cloth_length-1, self.cloth_width-1))
 
         ee_left_pos = self.get_left_ee_pos()
         ee_right_pos = self.get_right_ee_pos()

@@ -37,10 +37,10 @@ from gym import spaces
 from gym.core import Env
 
 import baxter_gym
+from baxter_gym.envs import MJCEnv
 from baxter_gym.util_classes.ik_controller import BaxterIKController
 from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
-
 
 BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_model.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
@@ -101,44 +101,45 @@ N_CONTACT_LIMIT = 12
 
 START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
+DISCRETE_DISP = 0.02 # How far to move for each discrete action choice
 
 
-class BaxterMJCEnv(Env):
-    metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
+class BaxterMJCEnv(MJCEnv):
+    # metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_mesh_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False):
-        assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
-        self.ctrl_mode = mode
-        self.active = True
+    # def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False):
+    #     assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
+    #     self.ctrl_mode = mode
+    #     self.active = True
 
-        self.cur_time = 0.
-        self.prev_time = 0.
-        self.timestep = timestep
-        self.sim_freq = sim_freq
+    #     self.cur_time = 0.
+    #     self.prev_time = 0.
+    #     self.timestep = timestep
+    #     self.sim_freq = sim_freq
 
-        self.use_viewer = view
-        self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
-        self.obs_include = obs_include
-        self._joint_map_cache = {}
-        self._ind_cache = {}
+    #     self.use_viewer = view
+    #     self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] != 'osmesa'
+    #     self.obs_include = obs_include
+    #     self._joint_map_cache = {}
+    #     self._ind_cache = {}
 
-        self.im_wid, self.im_height = im_dims
-        self.items = items
-        self._item_map = {item[0]: item for item in items}
-        self.include_files = include_files
-        self.include_mesh_items = include_mesh_items
-        self._set_obs_info(obs_include)
+    #     self.im_wid, self.im_height = im_dims
+    #     self.items = items
+    #     self._item_map = {item[0]: item for item in items}
+    #     self.include_files = include_files
+    #     self.include_items = include_items
+    #     self._set_obs_info(obs_include)
 
-        self._load_model()
-        self._init_control_info()
+    #     self._load_model()
+    #     self._init_control_info()
 
-        self._max_iter = max_iter
-        self._cur_iter = 0
+    #     self._max_iter = max_iter
+    #     self._cur_iter = 0
 
-        if view:
-            self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
-        else:
-            self._viewer = None
+    #     if view:
+    #         self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
+    #     else:
+    #         self._viewer = None
 
 
     def _init_control_info(self):
@@ -180,71 +181,71 @@ class BaxterMJCEnv(Env):
 
 
     def _load_model(self):
-        generate_xml(BASE_VEL_XML, ENV_XML, self.items, self.include_files, self.include_mesh_items, timestep=self.timestep)
+        generate_xml(BASE_VEL_XML, ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
         self.physics = Physics.from_xml_path(ENV_XML)
 
 
-    def _launch_viewer(self, width, height, title='Main'):
-        self._matplot_view_thread = None
-        if self.use_glew:
-            self._renderer = renderer.NullRenderer()
-            self._render_surface = None
-            self._viewport = renderer.Viewport(width, height)
-            self._window = gui.RenderWindow(width, height, title)
-            self._viewer = viewer.Viewer(
-                self._viewport, self._window.mouse, self._window.keyboard)
-            self._viewer_layout = views.ViewportLayout()
-            self._viewer.render()
-        else:
-            self._viewer = None
-            self._matplot_im = None
-            self._run_matplot_view()
+    # def _launch_viewer(self, width, height, title='Main'):
+    #     self._matplot_view_thread = None
+    #     if self.use_glew:
+    #         self._renderer = renderer.NullRenderer()
+    #         self._render_surface = None
+    #         self._viewport = renderer.Viewport(width, height)
+    #         self._window = gui.RenderWindow(width, height, title)
+    #         self._viewer = viewer.Viewer(
+    #             self._viewport, self._window.mouse, self._window.keyboard)
+    #         self._viewer_layout = views.ViewportLayout()
+    #         self._viewer.render()
+    #     else:
+    #         self._viewer = None
+    #         self._matplot_im = None
+    #         self._run_matplot_view()
 
 
-    def _reload_viewer(self):
-        if self._viewer is None or not self.use_glew: return
+    # def _reload_viewer(self):
+    #     if self._viewer is None or not self.use_glew: return
 
-        if self._render_surface:
-          self._render_surface.free()
+    #     if self._render_surface:
+    #       self._render_surface.free()
 
-        if self._renderer:
-          self._renderer.release()
+    #     if self._renderer:
+    #       self._renderer.release()
 
-        self._render_surface = render.Renderer(
-            max_width=_MAX_FRONTBUFFER_SIZE, max_height=_MAX_FRONTBUFFER_SIZE)
-        self._renderer = renderer.OffScreenRenderer(
-            self.physics.model, self._render_surface)
-        self._renderer.components += self._viewer_layout
-        self._viewer.initialize(
-            self.physics, self._renderer, touchpad=False)
-        self._viewer.zoom_to_scene()
-
-
-    def _render_viewer(self, pixels):
-        if self.use_glew:
-            with self._window._context.make_current() as ctx:
-                ctx.call(
-                    self._window._update_gui_on_render_thread, self._window._context.window, pixels)
-            self._window._mouse.process_events()
-            self._window._keyboard.process_events()
-        else:
-            if self._matplot_im is not None:
-                self._matplot_im.set_data(pixels)
-                plt.draw()
+    #     self._render_surface = render.Renderer(
+    #         max_width=_MAX_FRONTBUFFER_SIZE, max_height=_MAX_FRONTBUFFER_SIZE)
+    #     self._renderer = renderer.OffScreenRenderer(
+    #         self.physics.model, self._render_surface)
+    #     self._renderer.components += self._viewer_layout
+    #     self._viewer.initialize(
+    #         self.physics, self._renderer, touchpad=False)
+    #     self._viewer.zoom_to_scene()
 
 
-    def _run_matplot_view(self):
-        self._matplot_view_thread = Thread(target=self._launch_matplot_view)
-        self._matplot_view_thread.daemon = True
-        self._matplot_view_thread.start()
+    # def _render_viewer(self, pixels):
+    #     if self.use_glew:
+    #         with self._window._context.make_current() as ctx:
+    #             ctx.call(
+    #                 self._window._update_gui_on_render_thread, self._window._context.window, pixels)
+    #         self._window._mouse.process_events()
+    #         self._window._keyboard.process_events()
+    #     else:
+    #         if self._matplot_im is not None:
+    #             self._matplot_im.set_data(pixels)
+    #             plt.draw()
 
 
-    def _launch_matplot_view(self):
-        try:
-            self._matplot_im = plt.imshow(self.render(view=False))
-            plt.show()
-        except TclError:
-            print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')
+    # def _run_matplot_view(self):
+    #     self._matplot_view_thread = Thread(target=self._launch_matplot_view)
+    #     self._matplot_view_thread.daemon = True
+    #     self._matplot_view_thread.start()
+
+
+    # def _launch_matplot_view(self):
+    #     try:
+    #         self._matplot_im = plt.imshow(self.render(view=False))
+    #         plt.show()
+    #     except TclError:
+    #         print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')
 
 
     def _set_obs_info(self, obs_include):
@@ -325,31 +326,31 @@ class BaxterMJCEnv(Env):
         for item in self.items:
             if not len(obs_include) or item[0] in obs_include:
                 inds = self._obs_inds[item[0]]
-                obs[inds[0]:inds[1]] = self.get_item_pose(item[0])
+                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
 
         return np.array(obs)
 
 
-    def get_obs_types(self):
-        return self._obs_inds.keys()
+    # def get_obs_types(self):
+    #     return self._obs_inds.keys()
 
 
-    def get_obs_inds(self, obs_type):
-        if obs_type not in self._obs_inds:
-            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
-        return self._obs_inds[obs_type]
+    # def get_obs_inds(self, obs_type):
+    #     if obs_type not in self._obs_inds:
+    #         raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
+    #     return self._obs_inds[obs_type]
 
 
-    def get_obs_shape(self, obs_type):
-        if obs_type not in self._obs_inds:
-            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
-        return self._obs_shape[obs_type]
+    # def get_obs_shape(self, obs_type):
+    #     if obs_type not in self._obs_inds:
+    #         raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
+    #     return self._obs_shape[obs_type]
 
 
-    def get_obs_data(self, obs, obs_type):
-        if obs_type not in self._obs_inds:
-            raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
-        return obs[self._obs_inds[obs_type]].reshape(self._obs_shape[obs_type])
+    # def get_obs_data(self, obs, obs_type):
+    #     if obs_type not in self._obs_inds:
+    #         raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
+    #     return obs[self._obs_inds[obs_type]].reshape(self._obs_shape[obs_type])
 
 
     def get_arm_section_inds(self, section_name):
@@ -398,7 +399,7 @@ class BaxterMJCEnv(Env):
         return self.physics.data.xquat[r_gripper_ind].copy()
 
 
-    def get_item_pose(self, name, mujoco_frame=True):
+    def get_item_pos(self, name, mujoco_frame=True):
         model = self.physics.model
         try:
             ind = model.name2id(name, 'joint')
@@ -426,7 +427,7 @@ class BaxterMJCEnv(Env):
         return rot
 
 
-    def set_item_pose(self, name, pos, mujoco_frame=True, forward=True):
+    def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
         if not mujoco_frame:
             pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
 
@@ -467,10 +468,10 @@ class BaxterMJCEnv(Env):
         #     self.physics.forward()
 
 
-    def get_pos_from_label(self, label, mujoco_frame=True):
-        if label in self._item_map:
-            return self.get_item_pose(label, mujoco_frame)
-        return None
+    # def get_pos_from_label(self, label, mujoco_frame=True):
+    #     if label in self._item_map:
+    #         return self.get_item_pos(label, mujoco_frame)
+    #     return None
 
 
     def get_joint_angles(self):
@@ -525,7 +526,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[0] = 0.02
+        act[0] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -535,7 +536,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[0] = -0.02
+        act[0] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -545,7 +546,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[1] = 0.02
+        act[1] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -555,7 +556,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[1] = -0.02
+        act[1] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -565,7 +566,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[2] = 0.02
+        act[2] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -575,12 +576,12 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[2] = -0.02
+        act[2] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
     def open_right_gripper(self):
         act = np.zeros(8)
-        act[3] = 0.02
+        act[3] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -596,7 +597,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[4] = 0.02
+        act[4] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -606,7 +607,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[4] = -0.02
+        act[4] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -616,7 +617,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[5] = 0.02
+        act[5] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -626,7 +627,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[5] = -0.02
+        act[5] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -636,7 +637,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[6] = 0.02
+        act[6] = DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
 
@@ -646,7 +647,7 @@ class BaxterMJCEnv(Env):
         act = np.zeros(8)
         act[3] = grip_jnts[0]
         act[7] = grip_jnts[1]
-        act[6] = -0.02
+        act[6] = -DISCRETE_DISP
         return self.step(act, mode='end_effector_pos')
 
     def open_left_gripper(self):
@@ -888,36 +889,37 @@ class BaxterMJCEnv(Env):
                {}
 
 
-    def compute_reward(self):
-        return 0
+    # def compute_reward(self):
+    #     return 0
 
 
-    def is_done(self):
-        return self._cur_iter >= self._max_iter
+    # def is_done(self):
+    #     return self._cur_iter >= self._max_iter
 
 
-    def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
-               overlays=(), depth=False, scene_option=None, view=True):
-        # Make friendly with dm_control or gym interface
-        depth = depth or mode == 'depth_array'
-        view = view or mode == 'human'
-        if height == 0: height = self.im_height
-        if width == 0: width = self.im_wid
+    # def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
+    #            overlays=(), depth=False, scene_option=None, view=True):
+    #     # Make friendly with dm_control or gym interface
+    #     depth = depth or mode == 'depth_array'
+    #     view = view or mode == 'human'
+    #     if height == 0: height = self.im_height
+    #     if width == 0: width = self.im_wid
 
-        pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
-        if view and self.use_viewer:
-            self._render_viewer(pixels)
+    #     pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
+    #     if view and self.use_viewer:
+    #         self._render_viewer(pixels)
 
-        return pixels
+    #     return pixels
 
 
     def reset(self):
-        self._cur_iter = 0
-        self.physics.reset()
-        self._reload_viewer()
-        self.ctrl_data = {}
-        self.cur_time = 0.
-        self.prev_time = 0.
+        # self._cur_iter = 0
+        # self.physics.reset()
+        # self._reload_viewer()
+        # self.ctrl_data = {}
+        # self.cur_time = 0.
+        # self.prev_time = 0.
+        obs = super(BaxterMJCEnv, self).reset()
         for joint in BAXTER_GAINS:
             self.ctrl_data[joint] = {
                 'prev_err': 0.,
@@ -925,13 +927,13 @@ class BaxterMJCEnv(Env):
                 'cd': 0.,
                 'ci': 0.,
             }
-        return self.get_obs()
+        return obs
 
 
     @classmethod
     def init_from_plan(cls, plan, view=True):
         items = []
-        for p in plan.params.valuyes():
+        for p in plan.params.values():
             if p.is_symbol(): continue
             param_xml = get_param_xml(p)
             if param_xml is not None:
@@ -992,7 +994,7 @@ class BaxterMJCEnv(Env):
                     pass
                 elif not param.is_symbol():
                     if attr_name == 'pose':
-                        X[inds] = self.get_item_pose(param_name)
+                        X[inds] = self.get_item_pos(param_name)
                     elif attr_name == 'rotation':
                         X[inds] = self.get_item_rot(param_name, convert_to_euler=True)
 
@@ -1018,24 +1020,24 @@ class BaxterMJCEnv(Env):
         return obs
 
 
-    def close(self):
-        self.active = False
-        if self._viewer is not None and self.use_glew:
-            self._viewer.close()
-            self._viewer = None
-        self.physics.free()
+    # def close(self):
+    #     self.active = False
+    #     if self._viewer is not None and self.use_glew:
+    #         self._viewer.close()
+    #         self._viewer = None
+    #     self.physics.free()
 
 
-    def seed(self, seed=None):
-        pass
+    # def seed(self, seed=None):
+    #     pass
 
 
-    def list_joint_info(self):
-        for i in range(self.physics.model.njnt):
-            print('\n')
-            print('Jnt ', i, ':', self.physics.model.id2name(i, 'joint'))
-            print('Axis :', self.physics.model.jnt_axis[i])
-            print('Dof adr :', self.physics.model.jnt_dofadr[i])
-            body_id = self.physics.model.jnt_bodyid[i]
-            print('Body :', self.physics.model.id2name(body_id, 'body'))
-            print('Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body'))
+    # def list_joint_info(self):
+    #     for i in range(self.physics.model.njnt):
+    #         print('\n')
+    #         print('Jnt ', i, ':', self.physics.model.id2name(i, 'joint'))
+    #         print('Axis :', self.physics.model.jnt_axis[i])
+    #         print('Dof adr :', self.physics.model.jnt_dofadr[i])
+    #         body_id = self.physics.model.jnt_bodyid[i]
+    #         print('Body :', self.physics.model.id2name(body_id, 'body'))
+    #         print('Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body'))
