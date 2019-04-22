@@ -2,34 +2,34 @@
     <size njmax="795" nconmax="250" nstack="631875" />
     <!-- <option timestep="0.01"  gravity="0 0 -9.81" solver="Newton" noslip_iterations="0"/> -->
     <asset>
-        <mesh name="base_light" file="hsr/hsr_meshes/base_v2/base_light.stl"/>
-        <mesh name="body_light" file="hsr/hsr_meshes/base_v2/body_light.stl"/>
-        <mesh name="torso_base" file="hsr/hsr_meshes/base_v2/torso_base.stl"/>
-        <mesh name="base" file="hsr/hsr_meshes/base_v2/base.stl"/>
-        <mesh name="laser" file="hsr/hsr_meshes/sensors/laser.stl"/>
-        <mesh name="torso_light" file="hsr/hsr_meshes/torso_v0/torso_light.stl"/>
-        <mesh name="torso" file="hsr/hsr_meshes/torso_v0/torso.stl"/>
-        <mesh name="head_pan" file="hsr/hsr_meshes/head_v1/head_pan.stl"/>
-        <mesh name="head_upper" file="hsr/hsr_meshes/head_v1/head_upper.stl"/>
-        <mesh name="head_tilt" file="hsr/hsr_meshes/head_v1/head_tilt.stl"/>
-        <mesh name="tablet_base" file="hsr/hsr_meshes/head_v1/tablet_base.stl"/>
-        <mesh name="head" file="hsr/hsr_meshes/head_v1/head.stl"/>
-        <mesh name="tablet" file="hsr/hsr_meshes/head_v1/tablet.stl"/>
-        <mesh name="head_camera" file="hsr/hsr_meshes/sensors/head_camera.stl"/>
-        <mesh name="rgbd_light" file="hsr/hsr_meshes/sensors/rgbd_light.stl"/>
-        <mesh name="rgbd" file="hsr/hsr_meshes/sensors/rgbd.stl"/>
-        <mesh name="shoulder" file="hsr/hsr_meshes/arm_v0/shoulder.stl"/>
-        <mesh name="arm_flex_light" file="hsr/hsr_meshes/arm_v0/arm_flex_light.stl"/>
-        <mesh name="arm_flex" file="hsr/hsr_meshes/arm_v0/arm_flex.stl"/>
-        <mesh name="arm_roll_light" file="hsr/hsr_meshes/arm_v0/arm_roll_light.stl"/>
-        <mesh name="arm_roll" file="hsr/hsr_meshes/arm_v0/arm_roll.stl"/>
-        <mesh name="wrist_flex" file="hsr/hsr_meshes/wrist_v0/wrist_flex.stl"/>
-        <mesh name="wrist_roll" file="hsr/hsr_meshes/wrist_v0/wrist_roll.stl"/>
-        <mesh name="palm" file="hsr/hsr_meshes/hand_v0/palm.stl"/>
-        <mesh name="l_proximal" file="hsr/hsr_meshes/hand_v0/l_proximal.stl"/>
-        <mesh name="l_distal" file="hsr/hsr_meshes/hand_v0/l_distal.stl"/>
-        <mesh name="r_proximal" file="hsr/hsr_meshes/hand_v0/r_proximal.stl"/>
-        <mesh name="r_distal" file="hsr/hsr_meshes/hand_v0/r_distal.stl"/>
+        <mesh name="base_light" file="robot_info/meshes/hsr/hsr_meshes/base_v2/base_light.stl"/>
+        <mesh name="body_light" file="robot_info/meshes/hsr/hsr_meshes/base_v2/body_light.stl"/>
+        <mesh name="torso_base" file="robot_info/meshes/hsr/hsr_meshes/base_v2/torso_base.stl"/>
+        <mesh name="base" file="robot_info/meshes/hsr/hsr_meshes/base_v2/base.stl"/>
+        <mesh name="laser" file="robot_info/meshes/hsr/hsr_meshes/sensors/laser.stl"/>
+        <mesh name="torso_light" file="robot_info/meshes/hsr/hsr_meshes/torso_v0/torso_light.stl"/>
+        <mesh name="torso" file="robot_info/meshes/hsr/hsr_meshes/torso_v0/torso.stl"/>
+        <mesh name="head_pan" file="robot_info/meshes/hsr/hsr_meshes/head_v1/head_pan.stl"/>
+        <mesh name="head_upper" file="robot_info/meshes/hsr/hsr_meshes/head_v1/head_upper.stl"/>
+        <mesh name="head_tilt" file="robot_info/meshes/hsr/hsr_meshes/head_v1/head_tilt.stl"/>
+        <mesh name="tablet_base" file="robot_info/meshes/hsr/hsr_meshes/head_v1/tablet_base.stl"/>
+        <mesh name="head" file="robot_info/meshes/hsr/hsr_meshes/head_v1/head.stl"/>
+        <mesh name="tablet" file="robot_info/meshes/hsr/hsr_meshes/head_v1/tablet.stl"/>
+        <mesh name="head_camera" file="robot_info/meshes/hsr/hsr_meshes/sensors/head_camera.stl"/>
+        <mesh name="rgbd_light" file="robot_info/meshes/hsr/hsr_meshes/sensors/rgbd_light.stl"/>
+        <mesh name="rgbd" file="robot_info/meshes/hsr/hsr_meshes/sensors/rgbd.stl"/>
+        <mesh name="shoulder" file="robot_info/meshes/hsr/hsr_meshes/arm_v0/shoulder.stl"/>
+        <mesh name="arm_flex_light" file="robot_info/meshes/hsr/hsr_meshes/arm_v0/arm_flex_light.stl"/>
+        <mesh name="arm_flex" file="robot_info/meshes/hsr/hsr_meshes/arm_v0/arm_flex.stl"/>
+        <mesh name="arm_roll_light" file="robot_info/meshes/hsr/hsr_meshes/arm_v0/arm_roll_light.stl"/>
+        <mesh name="arm_roll" file="robot_info/meshes/hsr/hsr_meshes/arm_v0/arm_roll.stl"/>
+        <mesh name="wrist_flex" file="robot_info/meshes/hsr/hsr_meshes/wrist_v0/wrist_flex.stl"/>
+        <mesh name="wrist_roll" file="robot_info/meshes/hsr/hsr_meshes/wrist_v0/wrist_roll.stl"/>
+        <mesh name="palm" file="robot_info/meshes/hsr/hsr_meshes/hand_v0/palm.stl"/>
+        <mesh name="l_proximal" file="robot_info/meshes/hsr/hsr_meshes/hand_v0/l_proximal.stl"/>
+        <mesh name="l_distal" file="robot_info/meshes/hsr/hsr_meshes/hand_v0/l_distal.stl"/>
+        <mesh name="r_proximal" file="robot_info/meshes/hsr/hsr_meshes/hand_v0/r_proximal.stl"/>
+        <mesh name="r_distal" file="robot_info/meshes/hsr/hsr_meshes/hand_v0/r_distal.stl"/>
     </asset>
     <contact>
         <exclude body1="hsr" body2="arm_lift_link"/>
@@ -63,12 +63,13 @@
         <geom name="ground" type="plane" pos="0 0 0" size="4 4 .05" rgba="0.5 0.5 0.5 1"/>
         <!-- <camera name="forward_cam" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" /> -->
 
+        <camera name="fixed_overhead_camera" pos="0.0 0.0 5" quat="0.707 0 0 -0.707" />
         <body name="hsr" pos="0 0 0">
-            <camera name="overhead_cam" pos="0.5 0.0 5" quat="0.707 0 0 -0.707" />
+            <camera name="overhead_camera" pos="0.5 0.0 3.5" quat="0.707 0 0 -0.707" />
             <!--<site name="touchsensor_site" size="0.25 .5" pos="0 0 .5" type="cylinder" rgba="1 0 0 0"/>-->
-            <joint axis="1 0 0" damping="2200" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-5 5"/>
+            <joint axis="1 0 0" damping="2200" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-50 50"/>
             <!--<joint axis="1 0 0" damping="2200" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-.02 .02"/>-->
-            <joint axis="0 1 0" damping="2200" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-5 5"/>
+            <joint axis="0 1 0" damping="2200" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-50 50"/>
             <joint axis="0 0 1" damping="2200" name="rotation" pos="0 0 0" type="hinge" limited="true" range="-3.14 3.14"/>
             <inertial pos="-0.025978 -0.005498 0.17633" quat="0.995796 0.0411155 -0.0685908 0.0446655" mass="50"
                       diaginertia="0.378627 0.344913 0.145159"/>
@@ -135,13 +136,14 @@
                 <!--<geom type="mesh" mesh="torso"/>-->
                 <body name="head_pan_link" pos="0 0 0">
                     <!-- <camera quat=".5 .5 -.5 -.5" name="rgb" pos="0 0 0"/> -->
-                    <camera quat=".5 .5 -.5 -.5" name="head" pos="0 0 0.1"/>
                     <inertial pos="0.001724 -0.001969 -0.028886" quat="0.865343 0.459592 0.192259 -0.0547077"
                               mass="0.571903" diaginertia="0.00102408 0.00077623 0.000589392"/>
                     <!--<joint name="head_pan_joint" pos="0 0 0" axis="0 0 1" limited="false" range="-3.84 1.75" />-->
                     <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="head_pan"/>
                     <geom type="mesh" mesh="head_pan"/>
                     <body name="head_tilt_link" pos="0.02 0 0">
+                        <!-- <camera quat=".5 .5 -.5 -.5" name="head_cam" pos="-1 0 0.1"/> -->
+                        <camera quat="0.67 0.19 -0.19 -0.67" name="head_camera" pos="0 0 0.35"/>
                         <inertial pos="-0.055376 -0.002436 0.117733" quat="0.973833 0.0131235 -0.226864 -0.00327368"
                                   mass="2.1238" diaginertia="0.0218915 0.0149823 0.0091862"/>
                         <!--<joint name="head_tilt_joint" pos="0 0 0" axis="0 -1 0" limited="false" range="-1.57 0.52" />-->
@@ -204,8 +206,10 @@
                         <joint name="arm_roll_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-2.09 3.84" /> <!--Was commented out -->
                         <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_roll_light"/>
                         <geom type="mesh" mesh="arm_roll"/>
+                        <!-- <body name="wrist_flex_link" pos="0 0 0"
+                              quat="0.4 0 .6 0"> -->
                         <body name="wrist_flex_link" pos="0 0 0"
-                              quat="0.4 0 .6 0">
+                              quat="1 0 0 0">
                             <inertial pos="0.000131 -0.003929 0.00217" quat="0.672298 0.740248 0.0055614 0.00418043"
                                       mass="0.681225" diaginertia="7.43604e-05 6.49274e-05 3.81796e-05"/>
                             <joint name="wrist_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-1.92 1.22" /> <!--Was commented out -->
@@ -265,8 +269,8 @@
                                                     <body name="hand_l_finger_vacuum_frame" pos="0.00475 -0.011539 0.03322"
                                                           quat="0.92388 0.382683 0 0">
                                                         <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                                        <geom size="0.004 0.004 0.01" pos="0 0 -0.01" type="box" contype="0"
-                                                              conaffinity="0" group="1" rgba="0.33 0.33 0.33 1"/>
+                                                        <!-- <geom size="0.004 0.004 0.01" pos="0 0 -0.01" type="box" contype="0"
+                                                              conaffinity="0" group="1" rgba="0.33 0.33 0.33 1"/> -->
                                                     </body>
                                                 </body>
                                             </body>
@@ -319,18 +323,18 @@
         </body>
     </worldbody>
     <actuator>
-        <position gear="3" kp="300" name="slide_x_motor" joint="slide_x"
-                  forcelimited="true" forcerange="-100 100"
-                  ctrllimited="true" ctrlrange="-5 5"/>
-        <position gear="3" kp="300" name="slide_y_motor" joint="slide_y"
-                  forcelimited="true" forcerange="-100 100"
-                  ctrllimited="true" ctrlrange="-5 5"/>
-        <position gear="3" kp="300" name="rotation_motor" joint="rotation"
-                  forcelimited="true" forcerange="-100 100"
+        <position gear="1" kp="3000" name="slide_x_motor" joint="slide_x"
+                  forcelimited="true" forcerange="-500 500"
+                  ctrllimited="true" ctrlrange="-50 50"/>
+        <position gear="1" kp="3000" name="slide_y_motor" joint="slide_y"
+                  forcelimited="true" forcerange="-500 500"
+                  ctrllimited="true" ctrlrange="-50 50"/>
+        <position gear="1" kp="3000" name="rotation_motor" joint="rotation"
+                  forcelimited="true" forcerange="-500 500"
                   ctrllimited="true" ctrlrange="-3.14 3.14"/>
 
-        <position gear="5" kp="10" name="arm_lift_motor" joint="arm_lift_joint"
-                  forcelimited="true" forcerange="-100 100"
+        <position gear="1" kp="15000" name="arm_lift_motor" joint="arm_lift_joint"
+                  forcelimited="true" forcerange="-100 2500"
                   ctrllimited="true" ctrlrange="0 0.69"/>
         <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"
                   forcelimited="true" forcerange="-15 35"
@@ -339,10 +343,10 @@
                   forcelimited="true" forcerange="-15 35"
                   ctrllimited="true" ctrlrange="-2.09 3.84"/>
         <position gear="1" kp="1000" name="wrist_flex_motor" joint="wrist_flex_joint"
-                  forcelimited="true" forcerange="-20 20"
+                  forcelimited="true" forcerange="-50 50"
                   ctrllimited="true" ctrlrange="-1.92 1.22"/>
         <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint"
-                  forcelimited="true" forcerange="-20 20"
+                  forcelimited="true" forcerange="-50 50"
                   ctrllimited="true" ctrlrange="-1.92 3.67"/>
         <motor name="hand_l_proximal_motor" joint="hand_l_proximal_joint"
                   forcelimited="true" forcerange="-50 50"/>

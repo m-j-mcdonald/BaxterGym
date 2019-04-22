@@ -44,7 +44,7 @@ from baxter_gym.util_classes import transform_utils as T
 
 
 BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/hsr_rot_model.xml'
-ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_hsr_rot_env.xml'
+ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_hsr_env.xml'
 
 
 MUJOCO_JOINT_ORDER = ["slide_x", "slide_y", "rotation", "arm_lift_joint", "arm_flex_joint", "arm_roll_joint", "wrist_flex_joint", "wrist_roll_joint", "hand_l_proximal_joint", "hand_r_proximal_joint"]
@@ -66,7 +66,7 @@ MUJOCO_MODEL_Z_OFFSET = 0
 START_EE = [0, 0, 0, 0, 1, 0, 0, 0.474, 0.078, 0.1645]
 
 
-class HSRRotMJCEnv(MJCEnv):
+class HSRMJCEnv(MJCEnv):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
 
@@ -88,15 +88,25 @@ class HSRRotMJCEnv(MJCEnv):
             ('hsr', 'arm'): np.array(range(3,8)),
             ('hsr', 'gripper'): np.array([8]),
         }
-        
+
 
     def _set_obs_info(self, obs_include):
         self._obs_inds = {}
         self._obs_shape = {}
         ind = 0
-        if 'overhead_image' in obs_include or not len(obs_include):
-            self._obs_inds['overhead_image'] = (ind, ind+3*self.im_wid*self.im_height)
-            self._obs_shape['overhead_image'] = (self.im_height, self.im_wid, 3)
+        if 'overhead_camera' in obs_include or not len(obs_include):
+            self._obs_inds['overhead_camera'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['overhead_camera'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'fixed_overhead_camera' in obs_include or not len(obs_include):
+            self._obs_inds['fixed_overhead_camera'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['fixed_overhead_camera'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        if 'head_camera' in obs_include or not len(obs_include):
+            self._obs_inds['head_camera'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['head_camera'] = (self.im_height, self.im_wid, 3)
             ind += 3*self.im_wid*self.im_height
 
         if 'pos' in obs_include or not len(obs_include):
@@ -108,6 +118,24 @@ class HSRRotMJCEnv(MJCEnv):
             n_jnts = len(self.get_joint_angles())
             self._obs_inds['joints'] = (ind, ind+n_jnts)
             self._obs_shape['joints'] = (n_jnts,)
+            ind += n_jnts
+
+        if 'arm_joints' in obs_include or not len(obs_include):
+            n_jnts = len(self.get_arm_joint_angles())
+            self._obs_inds['arm_joints'] = (ind, ind+n_jnts)
+            self._obs_shape['arm_joints'] = (n_jnts,)
+            ind += n_jnts
+
+        if 'base_pos' in obs_include or not len(obs_include):
+            n_jnts = len(self.get_base_pos())
+            self._obs_inds['base_pos'] = (ind, ind+n_jnts)
+            self._obs_shape['base_pos'] = (n_jnts,)
+            ind += n_jnts
+
+        if 'base_theta' in obs_include or not len(obs_include):
+            n_jnts = len(self.get_base_dir())
+            self._obs_inds['base_theta'] = (ind, ind+n_jnts)
+            self._obs_shape['base_theta'] = (n_jnts,)
             ind += n_jnts
 
         if 'end_effector' in obs_include or not len(obs_include):
@@ -131,9 +159,22 @@ class HSRRotMJCEnv(MJCEnv):
         if obs_include is None:
             obs_include = self.obs_include
 
-        if not len(obs_include) or 'overhead_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
-            inds = self._obs_inds['overhead_image']
+        if not len(obs_include) or 'overhead_camera' in obs_include:
+            camera_ind = self.physics.model.name2id('overhead_camera', 'camera')
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=camera_ind, view=False)
+            inds = self._obs_inds['overhead_camera']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(obs_include) or 'fixed_overhead_camera' in obs_include:
+            camera_ind = self.physics.model.name2id('fixed_overhead_camera', 'camera')
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=camera_ind, view=False)
+            inds = self._obs_inds['fixed_overhead_camera']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(obs_include) or 'head_camera' in obs_include:
+            camera_ind = self.physics.model.name2id('head_camera', 'camera')
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=camera_ind, view=False)
+            inds = self._obs_inds['head_camera']
             obs[inds[0]:inds[1]] = pixels.flatten()
 
         if not len(obs_include) or 'pos' in obs_include:
@@ -146,16 +187,31 @@ class HSRRotMJCEnv(MJCEnv):
             inds = self._obs_inds['joints']
             obs[inds[0]:inds[1]] = jnts
 
+        if not len(obs_include) or 'arm_joints' in obs_include:
+            jnts = self.get_arm_joint_angles()
+            inds = self._obs_inds['arm_joints']
+            obs[inds[0]:inds[1]] = jnts
+
+        if not len(obs_include) or 'base_pos' in obs_include:
+            pos = self.get_base_pos()
+            inds = self._obs_inds['base_pos']
+            obs[inds[0]:inds[1]] = pos
+
+        if not len(obs_include) or 'base_theta' in obs_include:
+            theta = self.get_base_dir()
+            inds = self._obs_inds['base_theta']
+            obs[inds[0]:inds[1]] = theta
+
         if not len(obs_include) or 'end_effector' in obs_include:
             inds = self._obs_inds['end_effector']
             obs[inds[0]:inds[1]] = np.r_[self.get_ee_pos(), 
                                          self.get_ee_rot(),
                                          self.get_grip_jnts()[0]]
 
-        for item in self.items:
-            if not len(obs_include) or item[0] in obs_include:
-                inds = self._obs_inds[item[0]]
-                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
+        for item in self.item_names:
+            if not len(obs_include) or item in obs_include:
+                inds = self._obs_inds[item]
+                obs[inds[0]:inds[1]] = np.r_[self.get_item_pos(item), self.get_item_rot(item)]
 
         return np.array(obs)
 
@@ -200,10 +256,6 @@ class HSRRotMJCEnv(MJCEnv):
             pos[0] -= MUJOCO_MODEL_X_OFFSET
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
         return pos
-
-
-    def get_base_theta(self, mujoco_frame=True):
-        return self.physics.data.qpos[2]
 
 
     def get_base_dir(self, mujoco_frame=True):
@@ -305,12 +357,12 @@ class HSRRotMJCEnv(MJCEnv):
                    False, \
                    {}
 
+        cmd = abs_cmd
+        cmd[8] = grip
+        cmd[9] = grip
         for t in range(MJC_DELTAS_PER_STEP / 4):
             # error = abs_cmd - self.physics.data.qpos[1:19]
             # cmd = 7e1 * error
-            cmd = abs_cmd
-            cmd[8] = grip
-            cmd[9] = -grip
             self.physics.set_control(cmd)
             self.physics.step()
 

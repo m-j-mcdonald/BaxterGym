@@ -54,7 +54,8 @@ _AXES2TUPLE = {
 _TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
 
 
-def euler_to_quaternion(roll, pitch, yaw, order="wxyz"):
+def euler_to_quaternion(rpy, order="wxyz"):
+    roll, pitch, yaw = rpy
     qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
     qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
@@ -66,7 +67,8 @@ def euler_to_quaternion(roll, pitch, yaw, order="wxyz"):
     return [qw, qx, qy, qz]
 
 
-def quaternion_to_euler(w, x, y, z):
+def quaternion_to_euler(wxyz):
+    w, x, y, z = wxyz
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + y * y)
     roll = np.arctan2(t0, t1)

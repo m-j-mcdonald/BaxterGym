@@ -13,23 +13,23 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
 <mujoco model="baxter">
   <size njmax="795" nconmax="250" nstack="631875" />
   <asset>
-    <mesh name="base_link" file="baxter/torso/base_link.STL" />
-    <mesh name="base_link_collision" file="baxter/torso/base_link_collision.STL" />
-    <mesh name="PEDESTAL" file="baxter/base/PEDESTAL.STL" />
-    <mesh name="pedestal_link_collision" file="baxter/base/pedestal_link_collision.STL" />
-    <mesh name="H0" file="baxter/head/H0.STL" />
-    <mesh name="H1" file="baxter/head/H1.STL" />
-    <mesh name="S0" file="baxter/upper_shoulder/S0.STL" />
-    <mesh name="S1" file="baxter/lower_shoulder/S1.STL" />
-    <mesh name="E0" file="baxter/upper_elbow/E0.STL" />
-    <mesh name="E1" file="baxter/lower_elbow/E1.STL" />
-    <mesh name="W0" file="baxter/upper_forearm/W0.STL" />
-    <mesh name="W1" file="baxter/lower_forearm/W1.STL" />
-    <mesh name="W2" file="baxter/wrist/W2.STL" />
-    <mesh name="paddle_tip" file="baxter/electric_gripper/fingers/paddle_tip.STL" />
-    <mesh name="half_round_tip" file="baxter/electric_gripper/fingers/half_round_tip.STL" />
-    <mesh name="electric_gripper_base" file="baxter/electric_gripper/electric_gripper_base.STL" />
-    <mesh name="extended_narrow" file="baxter/electric_gripper/fingers/extended_narrow.STL"/>
+    <mesh name="base_link" file="robot_info/meshes/baxter/torso/base_link.STL" />
+    <mesh name="base_link_collision" file="robot_info/meshes/baxter/torso/base_link_collision.STL" />
+    <mesh name="PEDESTAL" file="robot_info/meshes/baxter/base/PEDESTAL.STL" />
+    <mesh name="pedestal_link_collision" file="robot_info/meshes/baxter/base/pedestal_link_collision.STL" />
+    <mesh name="H0" file="robot_info/meshes/baxter/head/H0.STL" />
+    <mesh name="H1" file="robot_info/meshes/baxter/head/H1.STL" />
+    <mesh name="S0" file="robot_info/meshes/baxter/upper_shoulder/S0.STL" />
+    <mesh name="S1" file="robot_info/meshes/baxter/lower_shoulder/S1.STL" />
+    <mesh name="E0" file="robot_info/meshes/baxter/upper_elbow/E0.STL" />
+    <mesh name="E1" file="robot_info/meshes/baxter/lower_elbow/E1.STL" />
+    <mesh name="W0" file="robot_info/meshes/baxter/upper_forearm/W0.STL" />
+    <mesh name="W1" file="robot_info/meshes/baxter/lower_forearm/W1.STL" />
+    <mesh name="W2" file="robot_info/meshes/baxter/wrist/W2.STL" />
+    <mesh name="paddle_tip" file="robot_info/meshes/baxter/electric_gripper/fingers/paddle_tip.STL" />
+    <mesh name="half_round_tip" file="robot_info/meshes/baxter/electric_gripper/fingers/half_round_tip.STL" />
+    <mesh name="electric_gripper_base" file="robot_info/meshes/baxter/electric_gripper/electric_gripper_base.STL" />
+    <mesh name="extended_narrow" file="robot_info/meshes/baxter/electric_gripper/fingers/extended_narrow.STL"/>
     <!-- <mesh name="laundry_basket" file="laundry_basket.STL" scale="0.001 0.001 0.001"/> -->
   </asset>
 
@@ -64,8 +64,8 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
   <worldbody>
     <light directional="false" cutoff="90" exponent="1" diffuse="1 1 1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5" ambient="0 0 0"/>
     <geom name="ground" type="plane" pos="0 0 -0.925" size="4 4 .05" rgba="0.7 0.6 0.5 1"/>
-    <camera name="overhead_cam" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
-    <camera name="forward_cam" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" />
+    <camera name="overhead_camera" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
+    <camera name="forward_camera" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" />
 
     <body name="base" pos="0 0 0">
       <inertial pos="0 0 0" mass="10" diaginertia="0.001 0.001 0.001" />

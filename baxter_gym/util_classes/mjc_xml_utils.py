@@ -227,7 +227,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
     assets = root.find('asset')
     equality = root.find('equality')
 
-    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/robot_info/meshes')
+    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/')
     compiler_xml = xml.fromstring(compiler_str)
     root.append(compiler_xml)
 
@@ -239,7 +239,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
         name = item_dict["name"]
         item_type = item_dict["type"]
         is_fixed = item_dict.get("is_fixed", False)
-        mass = item_dict.get("mass", 0.1)
+        mass = item_dict.get("mass", 0.05)
         pos = item_dict.get("pos", (0, 0, 0))
         quat = item_dict.get("quat", (1, 0, 0, 0))
         rgba = item_dict.get("rgba", (1, 1, 1, 1))
@@ -265,10 +265,9 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
                 equality.append(eq)
 
     for f_name in include_files:
-        with open(f_name, 'r+') as f:
-            data = f.read()
-
         if f_name.lower().endswith('.mjcf'):
+            with open(f_name, 'r+') as f:
+                data = f.read()
             elem = xml.fromstring(data)
 
             compiler = elem.find('compiler')
@@ -303,8 +302,8 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
 
         elif f_name.lower().endswith('.stl'):
             stripped_path = f_name.split('.')[0]
-            mesh_name = strippath.rsplit('/', 1)[-1]
-            elem = xml.Element('mesh', {'name':name, 'file':f_name})
+            mesh_name = stripped_path.rsplit('/', 1)[-1]
+            elem = xml.Element('mesh', {'name':mesh_name, 'file':f_name})
             assets.append(elem)
 
     base_xml.write(target_file)

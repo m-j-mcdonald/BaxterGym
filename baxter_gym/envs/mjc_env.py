@@ -61,6 +61,7 @@ class MJCEnv(Env):
         self._item_map = {item[0]: item for item in items}
         self.include_files = include_files
         self.include_items = include_items
+        self.item_names = self._item_map.keys() + [item['name'] for item in include_items]
         self._set_obs_info(obs_include)
 
         self._load_model()
@@ -91,7 +92,7 @@ class MJCEnv(Env):
         items = config.get("items", [])
         include_files = config.get("include_files", [])
         include_items = config.get("include_items", [])
-        im_dims = config.get("image_dimensions", (_CAM_WIDTH. _CAM_HEIGHT))
+        im_dims = config.get("image_dimensions", (_CAM_WIDTH, _CAM_HEIGHT))
         sim_freq = config.get("sim_freq", 25)
         ts = config.get("mjc_timestep", 0.002)
         view = config.get("view", False)
@@ -197,9 +198,11 @@ class MJCEnv(Env):
 
 
     def get_obs_data(self, obs, obs_type):
+        obs = np.array(obs)
         if obs_type not in self._obs_inds:
             raise KeyError('{0} is not a valid observation for this environment. Valid options: {1}'.format(obs_type, self.get_obs_types()))
-        return obs[self._obs_inds[obs_type]].reshape(self._obs_shape[obs_type])
+        inds = self._obs_inds[obs_type]
+        return obs[inds[0]:inds[1]].reshape(self._obs_shape[obs_type])
 
 
     def get_pos_from_label(self, label, mujoco_frame=True):
@@ -241,7 +244,7 @@ class MJCEnv(Env):
                 item_ind = -1
 
         if to_euler:
-            rot = T.quaternion_to_euler(rot[0], rot[1], rot[2], rot[3])
+            rot = T.quaternion_to_euler(rot)
 
         return rot
 
@@ -270,8 +273,8 @@ class MJCEnv(Env):
 
 
     def set_item_rot(self, name, rot, use_euler=False, mujoco_frame=True, forward=True):
-        if use_euler:
-            rot = T.euler_to_quaternion(rot[0], rot[1], rot[2])
+        if use_euler or len(rot) == 3:
+            rot = T.euler_to_quaternion(rot)
         item_type = 'joint'
         try:
             ind = self.physics.model.name2id(name, 'joint')
@@ -315,19 +318,30 @@ class MJCEnv(Env):
             return self.physics.model.geom_pos[ind]
             
         inds = np.where(self.physics.model.geom_type == geom_type)
-        return self.physics.model.geom_pos[inds]
+        return self.physics.data.geom_xpos[inds]
 
 
-    def get_geom_rotations(self, geom_type=enums.mjtGeom.mjGEOM_BOX, geom_ind=-1):
-        '''
-        Geom type options:
-        mjGEOM_PLANE=0, mjGEOM_HFIELD=1, mjGEOM_SPHERE=2, mjGEOM_CAPSULE=3, mjGEOM_ELLIPSOID=4, mjGEOM_CYLINDER=5, mjGEOM_BOX=6, mjGEOM_MESH=7
-        '''
-        if geom_ind >= 0:
-            return self.physics.model.geom_quat[ind]
+    # def get_geom_rotations(self, geom_type=enums.mjtGeom.mjGEOM_BOX, geom_ind=-1, use_euler=False):
+    #     '''
+    #     Geom type options:
+    #     mjGEOM_PLANE=0, mjGEOM_HFIELD=1, mjGEOM_SPHERE=2, mjGEOM_CAPSULE=3, mjGEOM_ELLIPSOID=4, mjGEOM_CYLINDER=5, mjGEOM_BOX=6, mjGEOM_MESH=7
+    #     '''
+    #     if geom_ind >= 0:
+    #         return self.physics.model.geom_quat[ind]
             
-        inds = np.where(self.physics.model.geom_type == geom_type)
-        return self.physics.model.geom_quat[inds]
+    #     inds = np.where(self.physics.model.geom_type == geom_type)
+    #     rots = self.physics.data.geom_xquat[inds]
+    #     if use_euler:
+    #         return np.array([T.quaternion_to_euler(r) for r in rots])
+    #     return rots
+
+
+    def get_camera_info(self, camera_name):
+        ind = self.physics.model.name2id(camera_name, 'camera')
+        fovy = self.physics.model.cam_fovy[ind].copy()
+        pos = self.physics.data.cam_xpos[ind].copy()
+        mat = self.physics.data.cam_xmat[ind].copy()
+        return fovy, pos, mat
 
 
     # def get_items_in_region()
