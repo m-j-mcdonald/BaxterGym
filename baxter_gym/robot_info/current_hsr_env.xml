@@ -287,7 +287,7 @@
                 <geom mass="0.05" rgba="1 1 1 1 " size="0.25 0.5 0.2 " type="box" />
             </body><body name="free_body_duplo">
                     <freejoint name="duplo" />
-                    <body name="duplo" pos="1.25 0 0.46" quat="1 0 0 0">
+                    <body name="duplo" pos="1.5 0 0.43" quat="1 0 0 0">
                         <geom mass="0.05" mesh="duplo1" rgba="(1, 1, 1, 1)" type="mesh" />
                     </body>
                 </body></worldbody>

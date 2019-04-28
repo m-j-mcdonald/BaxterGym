@@ -11,13 +11,14 @@ import xml.etree.ElementTree as xml
 
 from tkinter import TclError
 
-try:
-    import openravepy
-    from baxter_gym.util_classes.openrave_body import OpenRAVEBody
-    from baxter_gym.robot_info.robots import Baxter
-    USE_OPENRAVE = True
-except:
-    USE_OPENRAVE = False
+# try:
+#     import openravepy
+#     from baxter_gym.util_classes.openrave_body import OpenRAVEBody
+#     from baxter_gym.robot_info.robots import Baxter
+#     USE_OPENRAVE = True
+# except:
+#     USE_OPENRAVE = False
+USE_OPENRAVE = False
 
 try:
     from dm_control import render
@@ -100,6 +101,7 @@ GRASP_THRESHOLD = np.array([0.05, 0.05, 0.025]) # np.array([0.01, 0.01, 0.03])
 N_CONTACT_LIMIT = 12
 
 START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
+DOWN_QUAT = [0, 0, 1, 0]
 CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 DISCRETE_DISP = 0.02 # How far to move for each discrete action choice
 
@@ -257,6 +259,11 @@ class BaxterMJCEnv(MJCEnv):
             self._obs_shape['overhead_image'] = (self.im_height, self.im_wid, 3)
             ind += 3*self.im_wid*self.im_height
 
+        if 'forward_image' in obs_include or not len(obs_include):
+            self._obs_inds['forward_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['forward_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
         if 'right_image' in obs_include or not len(obs_include):
             self._obs_inds['right_image'] = (ind, ind+3*self.im_wid*self.im_height)
             self._obs_shape['right_image'] = (self.im_height, self.im_wid, 3)
@@ -288,7 +295,7 @@ class BaxterMJCEnv(MJCEnv):
         return ind
 
 
-    def get_obs(self, obs_include=None):
+    def get_obs(self, obs_include=None, view=False):
         obs = np.zeros(self.dO)
         if obs_include is None:
             obs_include = self.obs_include
@@ -296,6 +303,11 @@ class BaxterMJCEnv(MJCEnv):
         if not len(obs_include) or 'overhead_image' in obs_include:
             pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
             inds = self._obs_inds['overhead_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        if not len(obs_include) or 'forward_image' in obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
+            inds = self._obs_inds['forward_image']
             obs[inds[0]:inds[1]] = pixels.flatten()
 
         if not len(obs_include) or 'right_image' in obs_include:
@@ -416,15 +428,6 @@ class BaxterMJCEnv(MJCEnv):
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
             pos[0] -= MUJOCO_MODEL_X_OFFSET
         return pos
-
-
-    def get_item_rot(self, name, convert_to_euler=False):
-        model = self.physics.model
-        item_ind = model.name2id(name, 'body')
-        rot = self.physics.data.xquat[item_ind].copy()
-        if convert_to_euler:
-            rot = tf.euler_from_quaternion(rot)
-        return rot
 
 
     def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
@@ -728,11 +731,11 @@ class BaxterMJCEnv(MJCEnv):
 
         if use_right:
             if jnt_cmd is None:
-                # print('Cannot complete action; ik will cause unstable control')
+                print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[:7]
         else:
             if jnt_cmd is None:
-                # print('Cannot complete action; ik will cause unstable control')
+                print('Cannot complete action; ik will cause unstable control')
                 return arm_jnts[7:]
 
         return jnt_cmd
@@ -764,7 +767,7 @@ class BaxterMJCEnv(MJCEnv):
         return jnt_cmd is not None
 
 
-    def step(self, action, mode=None, obs_include=None, debug=False):
+    def step(self, action, mode=None, obs_include=None, view=False, debug=False):
         if mode is None:
             mode = self.ctrl_mode
 
@@ -857,21 +860,25 @@ class BaxterMJCEnv(MJCEnv):
             if action == 14: return self.move_left_gripper_down()
             if action == 15: return self.open_left_gripper()
             if action == 16: return self.close_left_gripper()
-            return self.get_obs(), \
+            return self.get_obs(view=view), \
                    self.compute_reward(), \
                    False, \
                    {}
 
-        error_coeff = 7e1
+        error_coeff = 7e2
         for t in range(self.sim_freq): # range(int(1/(4*self.timestep))):
             error = abs_cmd - self.physics.data.qpos[1:19]
             cmd =  error_coeff * error
             # cmd[cmd > 0.25] = 0.25
             # cmd[cmd < -0.25] = -0.25
-            cmd[7] = 50 if r_grip > 0.0165 else -100
+            cmd[7] = 50 if r_grip > 0.0165 else -50
             cmd[8] = -cmd[7]
-            cmd[16] = 50 if l_grip > 0.0165 else -100
+            cmd[16] = 50 if l_grip > 0.0165 else -50
             cmd[17] = -cmd[16]
+            # cmd[7] = 0.03 if r_grip > 0.0165 else -0.01
+            # cmd[8] = -cmd[7]
+            # cmd[16] = 0.03 if l_grip > 0.0165 else -0.01
+            # cmd[17] = -cmd[16]
             cur_state = self.physics.data.qpos.copy()
             self.physics.set_control(cmd)
             try:
@@ -883,7 +890,7 @@ class BaxterMJCEnv(MJCEnv):
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
 
-        return self.get_obs(obs_include=obs_include), \
+        return self.get_obs(obs_include=obs_include, view=view), \
                self.compute_reward(), \
                self.is_done(), \
                {}
@@ -1018,6 +1025,60 @@ class BaxterMJCEnv(MJCEnv):
             obs.append(self.jnt_ctrl_from_plan(plan, t))
 
         return obs
+
+
+    def _move_left_to(self, pos, gripper1, gripper2, view=False):
+        observations = []
+
+        limit1 = np.array([0.02, 0.02, 0.035])
+        limit2 = np.array([0.01, 0.01, 0.035])
+        ee_above = pos + np.array([0, 0, 0.2])
+        while np.any(np.abs(self.get_left_ee_pos() - ee_above) > limit1) or np.abs(self.get_gripper_joint_angles()[1] < gripper1*0.015):
+            next_left_cmd = np.minimum(ee_above - self.get_left_ee_pos(), np.ones((3,)))
+            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper1]]
+            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+            print self.get_left_ee_pos() - ee_above
+            observations.append((next_cmd, obs))
+
+        next_cmd = np.r_[np.zeros((7,)), [gripper1]]
+        obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+        observations.append((next_cmd, obs))
+
+        while np.any(np.abs(self.get_left_ee_pos() - pos) > limit2):
+            next_left_cmd = np.minimum(pos - self.get_left_ee_pos(), np.ones((3,)))
+            # next_left_cmd[0] -= 0.02
+            next_left_cmd[2] += 0.02
+            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper1]]
+            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+            observations.append((next_cmd, obs))
+
+        next_cmd = np.r_[np.zeros((7,)), [gripper2]]
+        obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+        observations.append((next_cmd, obs))
+
+        while np.any(np.abs(self.get_left_ee_pos() - ee_above) > limit1):
+            next_left_cmd = np.minimum(ee_above - self.get_left_ee_pos(), np.ones((3,)))
+            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper2]]
+            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+            observations.append((next_cmd, obs))
+
+        return observations
+
+
+    def move_left_to_grasp(self, item_name, view=False):
+        observations = []
+        item_pos = self.get_item_pos(item_name)
+        valid_grasp = self._check_ik(item_pos, quat=DOWN_QUAT)
+        if not valid_grasp:
+            return
+        return self._move_left_to(item_pos, 1, 0, view)
+
+
+    def move_left_to_place(self, target_pos, view=False):
+        valid_grasp = self._check_ik(target_pos, quat=DOWN_QUAT)
+        if not valid_grasp:
+            return
+        return self._move_left_to(target_pos, 0, 1, view)
 
 
     # def close(self):

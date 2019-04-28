@@ -161,9 +161,9 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             <inertial pos="0 0 0" quat="-0.5 0.5 0.5 0.5" mass="0.3" diaginertia="3e-08 2e-08 2e-08" />
                             <geom quat="0 0 0.707107 0.707107" class="viz" mesh="electric_gripper_base" />
                             <geom size="0.029 0.05" quat="0 0 0.707107 0.707107" type="cylinder" />
-                            <!--<body name="right_gripper" pos="0 0 0.1327">
+                            <body name="right_gripper" pos="0 0 0.1327">
                                 <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
-                            </body>-->
+                            </body>
                             <!-- <body name="right_gripper_l_finger" pos="0 -0.0015 0.02">
                               <inertial pos="0 0 0" quat="0 0 0 -1" mass="0.02" diaginertia="0.01 0.01 0.01" />
                               <joint name="right_gripper_l_finger_joint" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.020833" />
@@ -190,7 +190,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             </body> -->
                             <body name="right_gripper_l_finger" pos="0 -0.0015 0.02">
                               <inertial pos="0 0 0" quat="0 0 0 -1" mass="0.02" diaginertia="0.01 0.01 0.01" />
-                              <joint name="right_gripper_l_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.030833" />
+                              <joint damping="100" name="right_gripper_l_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.030833" />
                               <geom class="viz" mesh="extended_narrow" euler="1.57 1.57 0" rgba="0.1 0.1 0.1 1"/>
                               <geom size="0.005 0.00675 0.05635" pos="0 0.01725 0.0615" quat="0 0 0 -1" type="box" rgba="0.1 0.1 0.1 1"/>
                               <geom size="0.005 0.025 0.0085" pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" type="box" rgba="0.1 0.1 0.1 1"/>
@@ -203,7 +203,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             </body>
                             <body name="right_gripper_r_finger" pos="0 0.0015 0.02">
                               <inertial pos="0 0 0" mass="0.02" diaginertia="0.01 0.01 0.01" />
-                              <joint name="right_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="-0.030833 0" />
+                              <joint damping="100" name="right_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="-0.030833 0" />
                               <geom class="viz" mesh="extended_narrow" euler="1.57 -1.57 0" rgba="0.1 0.1 0.1 1"/>
                               <geom size="0.005 0.00675 0.05635" pos="0 -0.01725 0.0615" type="box" rgba="0.1 0.1 0.1 1"/>
                               <geom size="0.005 0.025 0.0085" pos="0.005 0.003 0.0083" type="box" rgba="0.1 0.1 0.1 1"/>
@@ -286,9 +286,9 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             <inertial pos="0 0 0" quat="-0.5 0.5 0.5 0.5" mass="0.3" diaginertia="3e-08 2e-08 2e-08" />
                             <geom quat="0 0 0.707107 0.707107" class="viz" mesh="electric_gripper_base" />
                             <geom size="0.029 0.05" quat="0 0 0.707107 0.707107" type="cylinder" />
-                            <!--<body name="left_gripper" pos="0 0 0.1327">
+                            <body name="left_gripper" pos="0 0 0.1327">
                                 <inertial pos="0 0 0" mass="0.0001" diaginertia="0 0 0" />
-                            </body>-->
+                            </body>
                             <!-- <body name="left_gripper_l_finger" pos="0 -0.0015 0.02">
                                 <inertial pos="0 0 0" quat="0 0 0 -1" mass="0.02" diaginertia="0.01 0.01 0.01" />
                                 <joint name="left_gripper_l_finger_joint" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.020833" />
@@ -315,7 +315,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             </body>  -->
                             <body name="left_gripper_l_finger" pos="0 -0.0015 0.02">
                                 <inertial pos="0 0 0" quat="0 0 0 -1" mass="0.02" diaginertia="0.01 0.01 0.01" />
-                                <joint name="left_gripper_l_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.030833" />
+                                <joint damping="0" name="left_gripper_l_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="0 0.030833" />
                                 <geom class="viz" mesh="extended_narrow" euler="1.57 1.57 0" rgba="0.1 0.1 0.1 1"/>
                                 <geom size="0.005 0.00675 0.05635" pos="0 0.01725 0.0615" quat="0 0 0 -1" type="box" rgba="0.1 0.1 0.1 1"/>
                                 <geom size="0.005 0.025 0.0085" pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" type="box" rgba="0.1 0.1 0.1 1"/>
@@ -327,7 +327,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             </body>
                             <body name="left_gripper_r_finger" pos="0 0.0015 0.02">
                                 <inertial pos="0 0 0" mass="0.02" diaginertia="0.01 0.01 0.01" />
-                                <joint name="left_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="-0.030833 0" />
+                                <joint damping="0" name="left_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 1 0" type="slide" range="-0.030833 0" />
                                 <geom class="viz" mesh="extended_narrow" euler="1.57 -1.57 0" rgba="0.1 0.1 0.1 1"/>
                                 <geom size="0.005 0.00675 0.05635" pos="0 -0.01725 0.0615" type="box" rgba="0.1 0.1 0.1 1"/>
                                 <geom size="0.005 0.025 0.0085" pos="0.005 0.003 0.0083" type="box" rgba="0.1 0.1 0.1 1"/>
@@ -363,11 +363,15 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
     <velocity joint="right_w0" ctrlrange="-4 4" ctrllimited="true" kv="5" />
     <velocity joint="right_w1" ctrlrange="-4 4" ctrllimited="true" kv="5" />
     <velocity joint="right_w2" ctrlrange="-4 4" ctrllimited="true" kv="5" />
-    <!-- <velocity joint="right_gripper_l_finger_joint" ctrlrange="-1 1" ctrllimited="true" kv="5" />
-    <velocity joint="right_gripper_r_finger_joint" ctrlrange="-1 1" ctrllimited="true" kv="5" /> -->
+    <!-- <velocity joint="right_gripper_l_finger_joint" ctrlrange="-7 7" ctrllimited="true" kv="5" />
+    <velocity joint="right_gripper_r_finger_joint" ctrlrange="-7 7" ctrllimited="true" kv="5" /> -->
     <motor joint="right_gripper_l_finger_joint" ctrlrange="-100 100" ctrllimited="true"/>
     <motor joint="right_gripper_r_finger_joint" ctrlrange="-100 100" ctrllimited="true"/>
 
+
+    <!-- <position ctrllimited="true" ctrlrange="-0.0115 0.030833" forcelimited="true" forcerange="-20 20" joint="right_gripper_l_finger_joint" kp="10000" name="right_gripper_l_finger_actuator" />
+    <position ctrllimited="true" ctrlrange="-0.030833 0.0115" forcelimited="true" forcerange="-20 20" joint="right_gripper_r_finger_joint" kp="10000" name="right_gripper_r_finger_actuator" />
+ -->
     <velocity joint="left_s0" ctrlrange="-2 2" ctrllimited="true" kv="60"/>
     <velocity joint="left_s1" ctrlrange="-2 2" ctrllimited="true" kv="50"/>
     <velocity joint="left_e0" ctrlrange="-2 2" ctrllimited="true" kv="20"/>
@@ -375,11 +379,15 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
     <velocity joint="left_w0" ctrlrange="-4 4" ctrllimited="true" kv="5" />
     <velocity joint="left_w1" ctrlrange="-4 4" ctrllimited="true" kv="5" />
     <velocity joint="left_w2" ctrlrange="-4 4" ctrllimited="true" kv="5" />
-    <!-- <velocity joint="left_gripper_l_finger_joint" ctrlrange="-1 1" ctrllimited="true" kv="5" />
-    <velocity joint="left_gripper_r_finger_joint" ctrlrange="-1 1" ctrllimited="true" kv="5" /> -->
+    <!-- <velocity joint="left_gripper_l_finger_joint" ctrlrange="-7 7" ctrllimited="true" kv="5" />
+    <velocity joint="left_gripper_r_finger_joint" ctrlrange="-7 7" ctrllimited="true" kv="5" /> -->
     <motor joint="left_gripper_l_finger_joint" ctrlrange="-100 100" ctrllimited="true"/>
     <motor joint="left_gripper_r_finger_joint" ctrlrange="-100 100" ctrllimited="true"/>
 
+
+    <!-- <position ctrllimited="true" ctrlrange="-0.0115 0.030833" forcelimited="true" forcerange="-20 20" joint="left_gripper_l_finger_joint" kp="10000" name="left_gripper_l_finger_actuator" />
+    <position ctrllimited="true" ctrlrange="-0.030833 0.0115" forcelimited="true" forcerange="-20 20" joint="left_gripper_r_finger_joint" kp="10000" name="left_gripper_r_finger_actuator" />
+ -->
 </actuator>
 
 </mujoco>

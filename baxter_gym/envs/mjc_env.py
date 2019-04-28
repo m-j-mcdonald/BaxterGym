@@ -80,6 +80,7 @@ class MJCEnv(Env):
         self._cur_iter = 0
 
         if view:
+            self.cur_im = np.zeros((self.im_height, self.im_wid, 3))
             self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
         else:
             self._viewer = None
@@ -157,7 +158,8 @@ class MJCEnv(Env):
 
     def _launch_matplot_view(self):
         try:
-            self._matplot_im = plt.imshow(self.render(view=False))
+            # self._matplot_im = plt.imshow(self.render(view=False))
+            self._matplot_im = plt.imshow(self.cur_im)
             plt.show()
         except TclError:
             print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')

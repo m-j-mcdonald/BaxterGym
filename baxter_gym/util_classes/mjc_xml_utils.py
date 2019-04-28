@@ -231,7 +231,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
     compiler_xml = xml.fromstring(compiler_str)
     root.append(compiler_xml)
 
-    option_str = '<option timestep="{0}"  gravity="0 0 -9.81" solver="Newton" noslip_iterations="0"/>'.format(timestep)
+    option_str = '<option timestep="{0}"  gravity="0 0 -9.81" integrator="Euler" solver="Newton" noslip_iterations="0"/>'.format(timestep)
     option_xml = xml.fromstring(option_str)
     root.append(option_xml)
 
