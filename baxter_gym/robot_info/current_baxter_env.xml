@@ -53,7 +53,8 @@
     <light ambient="0 0 0" cutoff="90" diffuse="1 1 1" dir="-1 0 -2.5" directional="false" exponent="1" pos="1 0 1.5" specular="0 0 0" />
     <geom name="ground" pos="0 0 -0.925" rgba="0.7 0.6 0.5 1" size="4 4 .05" type="plane" />
     <camera name="overhead_camera" pos="0.5 0.0 1.75" quat="0.707 0 0 -0.707" />
-    <camera name="forward_camera" pos="1.5 0.0 1.25" quat="0.6530752 0.2705757 0.2703603 0.6535954" />
+    
+    <camera name="forward_camera" pos="2 0.0 0.3" quat="0.5 0.5 0.5 0.5" />
 
     <body name="base" pos="0 0 0">
       <inertial diaginertia="0.001 0.001 0.001" mass="10" pos="0 0 0" />
@@ -141,7 +142,7 @@
                             
                             <body name="right_gripper_l_finger" pos="0 -0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" quat="0 0 0 -1" />
-                              <joint armature=".01" axis="0 1 0" damping="100" limited="true" name="right_gripper_l_finger_joint" pos="0 0 0" range="0 0.030833" type="slide" />
+                              <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="right_gripper_l_finger_joint" pos="0 0 0" range="0 0.030833" type="slide" />
                               <geom class="viz" euler="1.57 1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                               <geom pos="0 0.01725 0.0615" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                               <geom pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
@@ -154,7 +155,7 @@
                             </body>
                             <body name="right_gripper_r_finger" pos="0 0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" />
-                              <joint armature=".01" axis="0 1 0" damping="100" limited="true" name="right_gripper_r_finger_joint" pos="0 0 0" range="-0.030833 0" type="slide" />
+                              <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="right_gripper_r_finger_joint" pos="0 0 0" range="-0.030833 0" type="slide" />
                               <geom class="viz" euler="1.57 -1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
                               <geom pos="0 -0.01725 0.0615" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
                               <geom pos="0.005 0.003 0.0083" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
@@ -269,14 +270,24 @@
   <body name="free_body_block1">
                     <freejoint name="block1" />
                     <body name="block1" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 1 1 " size="0.02 0.02 0.02 " type="box" />
+                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block2">
+                    <freejoint name="block2" />
+                    <body name="block2" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block3">
+                    <freejoint name="block3" />
+                    <body name="block3" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body></worldbody>
 
   <actuator>
 
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s0" kv="60" />
-    <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s1" kv="50" />
+    <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s1" kv="100" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_e0" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_e1" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="right_w0" kv="5" />
@@ -289,7 +300,7 @@
 
     
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s0" kv="60" />
-    <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s1" kv="50" />
+    <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s1" kv="100" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_e0" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_e1" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="left_w0" kv="5" />

@@ -43,6 +43,7 @@ from baxter_gym.util_classes.ik_controller import BaxterIKController
 from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
 
+
 BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_model.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
 
@@ -90,6 +91,7 @@ BAXTER_GAINS = {
     'right_gripper_l_finger_joint': (1000, 0.1, 0.01),
     'right_gripper_r_finger_joint': (1000, 0.1, 0.01),
 }
+ERROR_COEFF = 1e3
 
 _MAX_FRONTBUFFER_SIZE = 2048
 _CAM_WIDTH = 200
@@ -100,7 +102,8 @@ GRASP_THRESHOLD = np.array([0.05, 0.05, 0.025]) # np.array([0.01, 0.01, 0.03])
 # MJC_DELTAS_PER_STEP = int(1. // MJC_TIME_DELTA)
 N_CONTACT_LIMIT = 12
 
-START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
+# START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
+START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
 DOWN_QUAT = [0, 0, 1, 0]
 CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
 DISCRETE_DISP = 0.02 # How far to move for each discrete action choice
@@ -741,7 +744,7 @@ class BaxterMJCEnv(MJCEnv):
         return jnt_cmd
 
 
-    def _check_ik(self, pos, quat, use_right=True):
+    def _check_ik(self, pos, quat=DOWN_QUAT, use_right=True):
         if USE_OPENRAVE:
             arm_jnts = self.get_arm_joint_angles()
             grip_jnts = self.get_gripper_joint_angles()
@@ -865,10 +868,9 @@ class BaxterMJCEnv(MJCEnv):
                    False, \
                    {}
 
-        error_coeff = 7e2
         for t in range(self.sim_freq): # range(int(1/(4*self.timestep))):
             error = abs_cmd - self.physics.data.qpos[1:19]
-            cmd =  error_coeff * error
+            cmd =  ERROR_COEFF * error
             # cmd[cmd > 0.25] = 0.25
             # cmd[cmd < -0.25] = -0.25
             cmd[7] = 50 if r_grip > 0.0165 else -50
@@ -926,6 +928,10 @@ class BaxterMJCEnv(MJCEnv):
         # self.ctrl_data = {}
         # self.cur_time = 0.
         # self.prev_time = 0.
+        self._cur_iter = 0
+        self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], True, False)
+        self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], False, False)
+
         obs = super(BaxterMJCEnv, self).reset()
         for joint in BAXTER_GAINS:
             self.ctrl_data[joint] = {
@@ -1027,58 +1033,143 @@ class BaxterMJCEnv(MJCEnv):
         return obs
 
 
-    def _move_left_to(self, pos, gripper1, gripper2, view=False):
-        observations = []
+    def _move_to(self, pos, gripper1, gripper2, left=True, view=False):
+        observations = [self.get_obs(view=False)]
+        if not self._check_ik(pos, quat=DOWN_QUAT, use_right=not left):
+            return observations
 
-        limit1 = np.array([0.02, 0.02, 0.035])
-        limit2 = np.array([0.01, 0.01, 0.035])
-        ee_above = pos + np.array([0, 0, 0.2])
-        while np.any(np.abs(self.get_left_ee_pos() - ee_above) > limit1) or np.abs(self.get_gripper_joint_angles()[1] < gripper1*0.015):
-            next_left_cmd = np.minimum(ee_above - self.get_left_ee_pos(), np.ones((3,)))
-            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper1]]
-            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
-            print self.get_left_ee_pos() - ee_above
+        limit1 = np.array([0.01, 0.01, 0.035])
+        limit2 = np.array([0.005, 0.005, 0.01])
+        ee_above = pos + np.array([0.0, 0, 0.4])
+        ee_above[2] = np.minimum(ee_above[2], 0.6)
+
+        inds = ([[4,5,6]], 7) if left else ([[0,1,2]], 3)
+        aux_inds = ([[0,1,2]], 3) if left else ([[4,5,6]], 7)
+        ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+        aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+
+        gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+
+        max_iter = 20
+        cur_iter = 0
+        while np.any(np.abs(ee_pos - ee_above) > limit1) or np.abs(gripper_angle < gripper1*0.015):
+            next_ee_cmd = np.minimum(np.maximum(ee_above - ee_pos, -0.2*np.ones((3,))), 0.2*np.ones((3,)))
+            # next_ee_cmd = ee_above - ee_pos
+            # next_ee_cmd[2] += 0.03
+            next_ee_cmd[0] = next_ee_cmd[0] if ee_above[0] > 0.5 else next_ee_cmd[0]
+            next_cmd = np.zeros((8,))
+            next_cmd[inds[0]] = next_ee_cmd
+            next_cmd[inds[1]] = gripper1
+
+            cur_aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+            next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
+
+            obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
             observations.append((next_cmd, obs))
+            ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+            gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+            cur_iter += 1
+            if cur_iter > max_iter: break
 
-        next_cmd = np.r_[np.zeros((7,)), [gripper1]]
-        obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+        next_cmd = np.zeros((8,))
+        next_cmd[inds[1]] = gripper1
+        obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
         observations.append((next_cmd, obs))
 
-        while np.any(np.abs(self.get_left_ee_pos() - pos) > limit2):
-            next_left_cmd = np.minimum(pos - self.get_left_ee_pos(), np.ones((3,)))
-            # next_left_cmd[0] -= 0.02
-            next_left_cmd[2] += 0.02
-            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper1]]
-            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
-            observations.append((next_cmd, obs))
+        max_iter = 20
+        cur_iter = 0
+        ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+        gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+        while np.any(np.abs(ee_pos - pos) > limit2):
+            next_ee_cmd = np.minimum(np.maximum(pos - ee_pos, -0.05*np.ones((3,))), 0.05*np.ones((3,)))
+            # next_ee_cmd = pos - ee_pos
+            next_ee_cmd[2] += 0.01
+            next_ee_cmd[0] = next_ee_cmd[0] - 0.01 if pos[0] > 0.5 else next_ee_cmd[0] - 0.01
+            next_cmd = np.zeros((8,))
+            next_cmd[inds[0]] = next_ee_cmd
+            next_cmd[inds[1]] = gripper1
 
-        next_cmd = np.r_[np.zeros((7,)), [gripper2]]
-        obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+            cur_aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+            next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
+
+            obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
+            observations.append((next_cmd, obs))
+            ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+            gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+            cur_iter += 1
+            if cur_iter > max_iter: break
+
+
+        next_cmd = np.zeros((8,))
+        next_cmd[inds[1]] = gripper2
+        obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
         observations.append((next_cmd, obs))
 
-        while np.any(np.abs(self.get_left_ee_pos() - ee_above) > limit1):
-            next_left_cmd = np.minimum(ee_above - self.get_left_ee_pos(), np.ones((3,)))
-            next_cmd = np.r_[np.zeros((4,)), next_left_cmd, [gripper2]]
-            obs = self.step(next_cmd, mode='end_effector_pos', view=view)
+        cur_iter = 0
+        ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+        gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+        while np.any(np.abs(ee_pos - ee_above) > limit1):
+            next_ee_cmd = np.minimum(np.maximum(ee_above - ee_pos, -0.1*np.ones((3,))), 0.1*np.ones((3,)))
+            # next_ee_cmd = ee_above - ee_pos
+            next_cmd = np.zeros((8,))
+            next_cmd[inds[0]] = next_ee_cmd
+            next_cmd[inds[1]] = gripper2
+
+            cur_aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+            next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
+
+            obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
             observations.append((next_cmd, obs))
+            ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+            gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+            cur_iter += 1
+            if cur_iter > max_iter: break
 
         return observations
 
 
-    def move_left_to_grasp(self, item_name, view=False):
-        observations = []
-        item_pos = self.get_item_pos(item_name)
-        valid_grasp = self._check_ik(item_pos, quat=DOWN_QUAT)
-        if not valid_grasp:
-            return
-        return self._move_left_to(item_pos, 1, 0, view)
+    # def move_left_to_grasp(self, item_name, view=False):
+    #     item_pos = self.get_item_pos(item_name)
+    #     return self._move_to(item_pos, 1, 0, True, view)
+
+
+    def move_left_to_grasp(self, pos, view=False):
+        return self._move_to(pos, 1, 0, True, view)
 
 
     def move_left_to_place(self, target_pos, view=False):
-        valid_grasp = self._check_ik(target_pos, quat=DOWN_QUAT)
-        if not valid_grasp:
-            return
-        return self._move_left_to(target_pos, 0, 1, view)
+        return self._move_to(target_pos, 0, 1, True, view)
+
+
+    def move_left_to(self, pos1, pos2, view=False):
+        if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=False) and \
+                self._check_ik(pos2, quat=DOWN_QUAT, use_right=False)):
+            return [self.get_obs(view=False)]
+        obs1 = self.move_left_to_grasp(pos1, view)
+        obs2 = self.move_left_to_place(pos2, view)
+        return np.r_[obs1, obs2]
+
+
+    # def move_right_to_grasp(self, item_name, view=False):
+    #     item_pos = self.get_item_pos(item_name)
+    #     return self._move_to(item_pos, 1, 0, False, view)
+
+
+    def move_right_to_grasp(self, pos, view=False):
+        return self._move_to(pos, 1, 0, False, view)
+
+
+    def move_right_to_place(self, target_pos, view=False):
+        return self._move_to(target_pos, 0, 1, False, view)
+
+
+    def move_right_to(self, pos1, pos2, view=False):
+        if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=True) and \
+                self._check_ik(pos2, quat=DOWN_QUAT, use_right=True)):
+            return [self.get_obs(view=False)]
+        obs1 = self.move_right_to_grasp(pos1, view)
+        obs2 = self.move_right_to_place(pos2, view)
+        return np.r_[obs1, obs2]
 
 
     # def close(self):

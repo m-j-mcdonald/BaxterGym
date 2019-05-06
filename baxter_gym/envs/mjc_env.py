@@ -31,6 +31,10 @@ from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
 
 
+
+BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/empty.xml'
+ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_empty.xml'
+
 _MAX_FRONTBUFFER_SIZE = 2048
 _CAM_WIDTH = 200
 _CAM_HEIGHT = 150
@@ -73,6 +77,7 @@ class MJCEnv(Env):
 
             self.set_item_pos(name, pos)
             self.set_item_rot(name, quat)
+        self.init_state = self.physics.data.qpos.copy()
 
         self._init_control_info()
 
@@ -99,6 +104,15 @@ class MJCEnv(Env):
         view = config.get("view", False)
         max_iter = config.get("max_iterations", 250)
         return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, view)
+
+
+    def _load_model(self):
+        generate_xml(BASE_XML, ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
+        self.physics = Physics.from_xml_path(ENV_XML)
+
+
+    def _init_control_info(self):
+        print('No control information to initialize.')
 
 
     def _launch_viewer(self, width, height, title='Main'):
@@ -374,11 +388,15 @@ class MJCEnv(Env):
 
     def reset(self):
         self._cur_iter = 0
-        self.physics.reset()
-        self._reload_viewer()
+        # self.physics.reset()
+        # self._reload_viewer()
         self.ctrl_data = {}
         self.cur_time = 0.
         self.prev_time = 0.
+
+        self.phycis.data.qvel[:] = 0.
+        self.physics.data.qacc[:]= 0.
+        self.physics.forward()
         return self.get_obs()
 
 
