@@ -105,6 +105,8 @@ N_CONTACT_LIMIT = 12
 # START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
 DOWN_QUAT = [0, 0, 1, 0]
+ALT_DOWN_QUAT = [0, 0.535, 0.845, 0]
+
 CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos', 'discrete']
 DISCRETE_DISP = 0.02 # How far to move for each discrete action choice
 
@@ -1076,7 +1078,8 @@ class BaxterMJCEnv(MJCEnv):
             ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
             gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
             cur_iter += 1
-            if cur_iter > max_iter: break
+            if cur_iter > max_iter and np.all(np.abs(ee_pos - ee_above)[:2] < 0.05): break
+            if cur_iter > 2*max_iter: break
 
         next_cmd = np.zeros((8,))
         next_cmd[inds[1]] = gripper1
@@ -1153,7 +1156,7 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def move_left_to(self, pos1, pos2, view=True):
-        if pos1[1] < -0.1 or pos2[1] < -0.1:
+        if pos1[1] < -0.2 or pos2[1] < -0.2:
             return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=False) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=False)):
@@ -1177,7 +1180,7 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def move_right_to(self, pos1, pos2, view=True):
-        if pos1[1] > 0.1 or pos2[1] > 0.1:
+        if pos1[1] > 0.2 or pos2[1] > 0.2:
             return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=True) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=True)):

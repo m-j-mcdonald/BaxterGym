@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import random
 from threading import Thread
 import time
 from tkinter import TclError
@@ -409,7 +410,8 @@ class MJCEnv(Env):
 
 
     def seed(self, seed=None):
-        pass
+        np.random.seed(seed)
+        random.seed(seed)
 
 
     def list_joint_info(self):
