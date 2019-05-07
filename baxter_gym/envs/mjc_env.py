@@ -39,7 +39,7 @@ _MAX_FRONTBUFFER_SIZE = 2048
 _CAM_WIDTH = 200
 _CAM_HEIGHT = 150
 
-CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
+CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos', 'discrete']
 
 class MJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
@@ -394,7 +394,7 @@ class MJCEnv(Env):
         self.cur_time = 0.
         self.prev_time = 0.
 
-        self.phycis.data.qvel[:] = 0.
+        self.physics.data.qvel[:] = 0.
         self.physics.data.qacc[:]= 0.
         self.physics.forward()
         return self.get_obs()

@@ -251,7 +251,6 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
             dims = item_dict["dimensions"]   
             items.append(get_item(name, item_type=item_type, dims=dims, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
 
-
     for name, item_body, tag_dict in items:
         worldbody.append(item_body)
         if 'contacts' in tag_dict:

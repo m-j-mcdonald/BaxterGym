@@ -19,7 +19,7 @@
     <mesh file="robot_info/meshes/baxter/electric_gripper/electric_gripper_base.STL" name="electric_gripper_base" />
     <mesh file="robot_info/meshes/baxter/electric_gripper/fingers/extended_narrow.STL" name="extended_narrow" />
     
-  <mesh file="robot_info/meshes/local/duplo1.stl" name="duplo1" /></asset>
+  </asset>
 
   <visual>
     <map fogend="3" fogstart="1.5" />
@@ -143,9 +143,9 @@
                             <body name="right_gripper_l_finger" pos="0 -0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" quat="0 0 0 -1" />
                               <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="right_gripper_l_finger_joint" pos="0 0 0" range="0 0.030833" type="slide" />
-                              <geom class="viz" euler="1.57 1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
-                              <geom pos="0 0.01725 0.0615" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
-                              <geom pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
+                              
+                              
+                              
                               <body name="right_gripper_l_finger_tip" pos="0 0.01725 0.1127">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.01" pos="0 0 0" quat="0 0 0 1" />
                                 <geom class="viz" euler="-1.57 0 0" mesh="half_round_tip" pos="-.007 -.01 0.003" />
@@ -156,9 +156,9 @@
                             <body name="right_gripper_r_finger" pos="0 0.0015 0.02">
                               <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" />
                               <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="right_gripper_r_finger_joint" pos="0 0 0" range="-0.030833 0" type="slide" />
-                              <geom class="viz" euler="1.57 -1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
-                              <geom pos="0 -0.01725 0.0615" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
-                              <geom pos="0.005 0.003 0.0083" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
+                              
+                              
+                              
                               <body name="right_gripper_r_finger_tip" pos="0 -0.01725 0.1127">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.01" pos="0 0 0" />
                                 <geom class="viz" euler="-1.57 3.14 0" mesh="half_round_tip" pos=".007 .01 0.003" />
@@ -231,9 +231,9 @@
                             <body name="left_gripper_l_finger" pos="0 -0.0015 0.02">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" quat="0 0 0 -1" />
                                 <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="left_gripper_l_finger_joint" pos="0 0 0" range="0 0.030833" type="slide" />
-                                <geom class="viz" euler="1.57 1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
-                                <geom pos="0 0.01725 0.0615" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
-                                <geom pos="-0.005 -0.003 0.0083" quat="0 0 0 -1" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
+                                
+                                
+                                
                                 <body name="left_gripper_l_finger_tip" pos="0 0.01725 0.1127">
                                     <inertial diaginertia="0.01 0.01 0.01" mass="0.01" pos="0 0 0" quat="0 0 0 1" />
                                     <geom class="viz" euler="-1.57 0 0" mesh="paddle_tip" pos="-.02 -.009 0.003" />
@@ -243,9 +243,9 @@
                             <body name="left_gripper_r_finger" pos="0 0.0015 0.02">
                                 <inertial diaginertia="0.01 0.01 0.01" mass="0.02" pos="0 0 0" />
                                 <joint armature=".01" axis="0 1 0" damping="0" limited="true" name="left_gripper_r_finger_joint" pos="0 0 0" range="-0.030833 0" type="slide" />
-                                <geom class="viz" euler="1.57 -1.57 0" mesh="extended_narrow" rgba="0.1 0.1 0.1 1" />
-                                <geom pos="0 -0.01725 0.0615" rgba="0.1 0.1 0.1 1" size="0.005 0.00675 0.05635" type="box" />
-                                <geom pos="0.005 0.003 0.0083" rgba="0.1 0.1 0.1 1" size="0.005 0.025 0.0085" type="box" />
+                                
+                                
+                                
                                 <body name="left_gripper_r_finger_tip" pos="0 -0.01725 0.1127">
                                     <inertial diaginertia="0.01 0.01 0.01" mass="0.01" pos="0 0 0" />
                                     <geom class="viz" euler="-1.57 3.14 0" mesh="paddle_tip" pos=".02 .009 0.003" />
@@ -267,48 +267,53 @@
     <body euler="0 0 0" name="table" pos="0.5 0.0 -0.4875">
       <geom name="table" rgba="0 0.5 0 1" size="1 1.5 0.4375" type="box" />
     </body>
-  <body name="free_body_block1">
+  <body name="free_body_block0">
+                    <freejoint name="block0" />
+                    <body name="block0" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block1">
                     <freejoint name="block1" />
                     <body name="block1" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="2" rgba="1 0 0 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body><body name="free_body_block2">
                     <freejoint name="block2" />
                     <body name="block2" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="2" rgba="0 0 1 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body><body name="free_body_block3">
                     <freejoint name="block3" />
                     <body name="block3" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="2" rgba="1 1 0 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body></worldbody>
 
   <actuator>
 
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s0" kv="60" />
-    <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s1" kv="100" />
+    <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_s1" kv="100" /> 
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_e0" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="right_e1" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="right_w0" kv="5" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="right_w1" kv="5" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="right_w2" kv="5" />
     
-    <motor ctrllimited="true" ctrlrange="-100 100" joint="right_gripper_l_finger_joint" />
-    <motor ctrllimited="true" ctrlrange="-100 100" joint="right_gripper_r_finger_joint" />
+    <motor ctrllimited="true" ctrlrange="-500 500" joint="right_gripper_l_finger_joint" />
+    <motor ctrllimited="true" ctrlrange="-500 500" joint="right_gripper_r_finger_joint" />
 
 
     
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s0" kv="60" />
-    <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s1" kv="100" />
+    <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_s1" kv="100" /> 
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_e0" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-2 2" joint="left_e1" kv="20" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="left_w0" kv="5" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="left_w1" kv="5" />
     <velocity ctrllimited="true" ctrlrange="-4 4" joint="left_w2" kv="5" />
     
-    <motor ctrllimited="true" ctrlrange="-100 100" joint="left_gripper_l_finger_joint" />
-    <motor ctrllimited="true" ctrlrange="-100 100" joint="left_gripper_r_finger_joint" />
+    <motor ctrllimited="true" ctrlrange="-500 500" joint="left_gripper_l_finger_joint" />
+    <motor ctrllimited="true" ctrlrange="-500 500" joint="left_gripper_r_finger_joint" />
 
 
     

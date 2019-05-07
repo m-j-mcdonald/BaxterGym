@@ -105,7 +105,7 @@ N_CONTACT_LIMIT = 12
 # START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
 DOWN_QUAT = [0, 0, 1, 0]
-CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos']
+CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos', 'discrete']
 DISCRETE_DISP = 0.02 # How far to move for each discrete action choice
 
 
@@ -877,6 +877,7 @@ class BaxterMJCEnv(MJCEnv):
             cmd[8] = -cmd[7]
             cmd[16] = 50 if l_grip > 0.0165 else -50
             cmd[17] = -cmd[16]
+
             # cmd[7] = 0.03 if r_grip > 0.0165 else -0.01
             # cmd[8] = -cmd[7]
             # cmd[16] = 0.03 if l_grip > 0.0165 else -0.01
@@ -1034,19 +1035,24 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def _move_to(self, pos, gripper1, gripper2, left=True, view=False):
+        self.physics.data.qpos[8] = 0.03
+        self.physics.data.qpos[9] = -0.03
+        self.physics.data.qpos[17] = 0.03
+        self.physics.data.qpos[18] = -0.03
+        self.physics.forward()
         observations = [self.get_obs(view=False)]
         if not self._check_ik(pos, quat=DOWN_QUAT, use_right=not left):
             return observations
 
         limit1 = np.array([0.01, 0.01, 0.035])
         limit2 = np.array([0.005, 0.005, 0.01])
-        ee_above = pos + np.array([0.0, 0, 0.4])
+        ee_above = pos + np.array([0.0, 0, 0.2])
         ee_above[2] = np.minimum(ee_above[2], 0.6)
 
         inds = ([[4,5,6]], 7) if left else ([[0,1,2]], 3)
         aux_inds = ([[0,1,2]], 3) if left else ([[4,5,6]], 7)
         ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
-        aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+        aux_ee_pos = [0.6, -0.5, 0.2] if left else [0.6, 0.5, 0.2]
 
         gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
 
@@ -1065,7 +1071,8 @@ class BaxterMJCEnv(MJCEnv):
             next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
 
             obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
-            observations.append((next_cmd, obs))
+            # observations.append((next_cmd, obs))
+            observations.append(obs)
             ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
             gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
             cur_iter += 1
@@ -1074,9 +1081,10 @@ class BaxterMJCEnv(MJCEnv):
         next_cmd = np.zeros((8,))
         next_cmd[inds[1]] = gripper1
         obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
-        observations.append((next_cmd, obs))
+        # observations.append((next_cmd, obs))
+        observations.append(obs)
 
-        max_iter = 20
+        max_iter = 15
         cur_iter = 0
         ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
         gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
@@ -1093,7 +1101,8 @@ class BaxterMJCEnv(MJCEnv):
             next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
 
             obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
-            observations.append((next_cmd, obs))
+            # observations.append((next_cmd, obs))
+            observations.append(obs)
             ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
             gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
             cur_iter += 1
@@ -1103,7 +1112,8 @@ class BaxterMJCEnv(MJCEnv):
         next_cmd = np.zeros((8,))
         next_cmd[inds[1]] = gripper2
         obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
-        observations.append((next_cmd, obs))
+        # observations.append((next_cmd, obs))
+        observations.append(obs)
 
         cur_iter = 0
         ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
@@ -1119,7 +1129,8 @@ class BaxterMJCEnv(MJCEnv):
             next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
 
             obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
-            observations.append((next_cmd, obs))
+            # observations.append((next_cmd, obs))
+            observations.append(obs)
             ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
             gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
             cur_iter += 1
@@ -1141,7 +1152,9 @@ class BaxterMJCEnv(MJCEnv):
         return self._move_to(target_pos, 0, 1, True, view)
 
 
-    def move_left_to(self, pos1, pos2, view=False):
+    def move_left_to(self, pos1, pos2, view=True):
+        if pos1[1] < -0.1 or pos2[1] < -0.1:
+            return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=False) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=False)):
             return [self.get_obs(view=False)]
@@ -1163,7 +1176,9 @@ class BaxterMJCEnv(MJCEnv):
         return self._move_to(target_pos, 0, 1, False, view)
 
 
-    def move_right_to(self, pos1, pos2, view=False):
+    def move_right_to(self, pos1, pos2, view=True):
+        if pos1[1] > 0.1 or pos2[1] > 0.1:
+            return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=True) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=True)):
             return [self.get_obs(view=False)]
