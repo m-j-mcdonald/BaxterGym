@@ -2,4 +2,5 @@
 mjkey.txt
 baxter_gym/local/*
 baxter_gym/robot_info/meshes/local*
+baxter_gym/robot_info/current*
 
