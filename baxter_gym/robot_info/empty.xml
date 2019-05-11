@@ -1,0 +1,21 @@
+<mujoco model="empty">
+  <size njmax="795" nconmax="250" nstack="631875" />
+
+  <visual>
+    <map fogstart="1.5" fogend="3" />
+    <quality shadowsize="2048" />
+  </visual>
+
+  <default>
+    <default class="viz">
+      <geom margin="0.001" contype="0" conaffinity="0" group="1" type="mesh" />
+    </default>
+    <geom solimp="0.99 0.99 0.01" solref="0.01 1" condim="6" />
+  </default>
+
+  <worldbody>
+    <light directional="false" cutoff="90" exponent="1" diffuse="0.1 0.1 0.1" specular="0 0 0" pos="1 0 1.5" dir="-1 0 -2.5" ambient="0 0 0"/>
+    <geom name="ground" type="plane" pos="0 0 -0.925" size="20 20 .05" rgba="0.7 0.6 0.5 1"/>
+    <camera name="overhead_camera" pos="0 0.0 25" quat="0.707 0 0 -0.707" />
+  </worldbody>
+</mujoco>
