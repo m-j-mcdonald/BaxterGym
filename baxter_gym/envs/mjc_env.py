@@ -33,7 +33,7 @@ from baxter_gym.util_classes import transform_utils as T
 
 
 
-BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/empty.xml'
+BASE_XML = baxter_gym.__path__[0]+'/robot_info/empty.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_empty.xml'
 
 _MAX_FRONTBUFFER_SIZE = 2048
@@ -90,6 +90,9 @@ class MJCEnv(Env):
             self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
         else:
             self._viewer = None
+
+        self.render(camera_id=0)
+        self.render(camera_id=0)
 
 
     @classmethod
@@ -198,6 +201,54 @@ class MJCEnv(Env):
         self.physics.forward()
 
 
+    def _set_obs_info(self, obs_include):
+        self._obs_inds = {}
+        self._obs_shape = {}
+        ind = 0
+        if 'overhead_image' in obs_include or not len(obs_include):
+            self._obs_inds['overhead_image'] = (ind, ind+3*self.im_wid*self.im_height)
+            self._obs_shape['overhead_image'] = (self.im_height, self.im_wid, 3)
+            ind += 3*self.im_wid*self.im_height
+
+        # if 'forward_image' in obs_include or not len(obs_include):
+        #     self._obs_inds['forward_image'] = (ind, ind+3*self.im_wid*self.im_height)
+        #     self._obs_shape['forward_image'] = (self.im_height, self.im_wid, 3)
+        #     ind += 3*self.im_wid*self.im_height
+
+        for item, xml, info in self.items:
+            if item in obs_include or not len(obs_include):
+                self._obs_inds[item] = (ind, ind+3) # Only store 3d Position
+                self._obs_shape[item] = (3,)
+                ind += 3
+
+        self.dO = ind
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(ind,), dtype='float32')
+        return ind
+
+
+    def get_obs(self, obs_include=None, view=False):
+        obs = np.zeros(self.dO)
+        if obs_include is None:
+            obs_include = self.obs_include
+
+        if not len(obs_include) or 'overhead_image' in obs_include:
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
+            inds = self._obs_inds['overhead_image']
+            obs[inds[0]:inds[1]] = pixels.flatten()
+
+        # if not len(obs_include) or 'forward_image' in obs_include:
+        #     pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
+        #     inds = self._obs_inds['forward_image']
+        #     obs[inds[0]:inds[1]] = pixels.flatten()
+
+        for item in self.items:
+            if not len(obs_include) or item[0] in obs_include:
+                inds = self._obs_inds[item[0]]
+                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
+
+        return np.array(obs)
+
+
     def get_obs_types(self):
         return self._obs_inds.keys()
 
@@ -267,6 +318,7 @@ class MJCEnv(Env):
 
 
     def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
+        assert len(pos) == 3
         item_type = 'joint'
         try:
             ind = self.physics.model.name2id(name, 'joint')
@@ -290,6 +342,7 @@ class MJCEnv(Env):
 
 
     def set_item_rot(self, name, rot, use_euler=False, mujoco_frame=True, forward=True):
+        assert len(rot) == 3 or len(rot) == 4
         if use_euler or len(rot) == 3:
             rot = T.euler_to_quaternion(rot)
         item_type = 'joint'
