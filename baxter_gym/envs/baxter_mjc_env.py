@@ -1181,7 +1181,7 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def move_right_to(self, pos1, pos2, view=True):
-        if pos1[1] > 0.2 or pos2[1] > 0.2 pos1[1] < -0.8 or pos2[1] < -0.8:
+        if pos1[1] > 0.2 or pos2[1] > 0.2 or pos1[1] < -0.8 or pos2[1] < -0.8:
             return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=True) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=True)):
