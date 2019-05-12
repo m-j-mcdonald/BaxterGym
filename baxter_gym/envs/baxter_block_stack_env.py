@@ -130,7 +130,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
             # item2_pos = self.get_item_pos(action_meaning[2].lower()) if len(action_meaning) > 2 else None
 
             grasp = np.array([0, 0, 0.01])
-            if 'STACK' not in action_type and item1_pos[2] > 0.02:
+            if N_BLOCKS > 3 and 'STACK' not in action_type and item1_pos[2] > 0.02:
                 obs = [self.get_obs(view=False)]
             elif action_type == 'LEFTCENTER':
                 obs = self.move_left_to(item1_pos+grasp, [0.55, 0, 0])
