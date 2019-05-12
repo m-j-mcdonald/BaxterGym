@@ -283,11 +283,6 @@
                     <body name="block2" pos="0 0 0" quat="1 0 0 0">
                         <geom mass="2" rgba="0 0 1 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
-                </body><body name="free_body_block3">
-                    <freejoint name="block3" />
-                    <body name="block3" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 0 1 " size="0.03 0.03 0.03 " type="box" />
-                    </body>
                 </body></worldbody>
 
   <actuator>
@@ -320,4 +315,4 @@
     
 </actuator>
 
-<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/dependencies/BaxterGym/baxter_gym/" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" integrator="Euler" noslip_iterations="0" solver="Newton" timestep="0.002" /></mujoco>
+<compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" integrator="Euler" noslip_iterations="0" solver="Newton" timestep="0.002" /></mujoco>

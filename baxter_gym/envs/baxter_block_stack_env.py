@@ -17,12 +17,19 @@ IMAGE_WIDTH, IMAGE_HEIGHT = (107, 80)
 POSSIBLE_BLOCK_LOCS = np.r_[list(itertools.product(range(45, 76, 10), range(20, 71, 10))), 
                             list(itertools.product(range(45, 76, 10), range(-70, -21, 10)))].astype(np.float64) / 100.
 
-POSSIBLE_BLOCK_REGION_LOCS = [
-    np.array(list(itertools.product(range(45, 60, 2), range(20, 70, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(60, 76, 2), range(20, 70, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(45, 60, 2), range(-70, -20, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(60, 76, 2), range(-70, -20, 2)))).astype(np.float64) / 100.
-]
+# POSSIBLE_BLOCK_REGION_LOCS = np.array([
+#     np.array(list(itertools.product(range(45, 60, 2), range(20, 70, 2)))).astype(np.float64) / 100.,
+#     np.array(list(itertools.product(range(60, 72, 2), range(20, 70, 2)))).astype(np.float64) / 100.,
+#     np.array(list(itertools.product(range(45, 60, 2), range(-70, -20, 2)))).astype(np.float64) / 100.,
+#     np.array(list(itertools.product(range(60, 72, 2), range(-70, -20, 2)))).astype(np.float64) / 100.
+# ])
+
+POSSIBLE_BLOCK_REGION_LOCS = np.array([
+    np.array(list(itertools.product(range(45, 60, 2), range(10, 40, 2)))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(range(60, 72, 2), range(10, 40, 2)))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(range(45, 60, 2), range(-40, -10, 2)))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(range(60, 72, 2), range(-40, -10, 2)))).astype(np.float64) / 100.
+])
 
 class BaxterBlockStackEnv(BaxterMJCEnv):
     def __init__(self):
@@ -67,7 +74,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
 
 
     def randomize_init_state(self):
-        locs = POSSIBLE_BLOCK_LOCS.copy()
+        locs = POSSIBLE_BLOCK_REGION_LOCS.copy()
         np.random.shuffle(locs)
         # for i in range(N_BLOCKS):
         #     self.set_item_pos('block{0}'.format(i), np.r_[locs[i], -0.02], forward=False)
@@ -130,7 +137,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
             # item2_pos = self.get_item_pos(action_meaning[2].lower()) if len(action_meaning) > 2 else None
 
             grasp = np.array([0, 0, 0.01])
-            if N_BLOCKS > 3 and 'STACK' not in action_type and item1_pos[2] > 0.02:
+            if 'STACK' not in action_type and item1_pos[2] > 0.02: # and N_BLOCKS > 3:
                 obs = [self.get_obs(view=False)]
             elif action_type == 'LEFTCENTER':
                 obs = self.move_left_to(item1_pos+grasp, [0.55, 0, 0])
@@ -177,7 +184,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
 
 class BaxterLeftBlockStackEnv(BaxterBlockStackEnv):
     def randomize_init_state(self):
-        locs = POSSIBLE_BLOCK_LOCS.copy()
+        locs = POSSIBLE_BLOCK_REGION_LOCS.copy()
         np.random.shuffle(locs)
         # for i in range(N_BLOCKS):
         #     self.set_item_pos('block{0}'.format(i), np.r_[locs[i], -0.02], forward=False)
