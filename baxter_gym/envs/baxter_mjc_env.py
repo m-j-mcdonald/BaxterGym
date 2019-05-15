@@ -103,7 +103,8 @@ GRASP_THRESHOLD = np.array([0.05, 0.05, 0.025]) # np.array([0.01, 0.01, 0.03])
 N_CONTACT_LIMIT = 12
 
 # START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
-START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
+# START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
+START_EE = [0.6, -0.4, 0.8, 0, 0, 1, 0, 0.6, 0.4, 0.8, 0, 0, 1, 0]
 DOWN_QUAT = [0, 0, 1, 0]
 ALT_DOWN_QUAT = [0, 0.535, 0.845, 0]
 
@@ -488,7 +489,15 @@ class BaxterMJCEnv(MJCEnv):
 
     def get_arm_joint_angles(self):
         inds = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]
-        return self.physics.data.qpos[inds]
+        return self.physics.data.qpos[inds].copy()
+
+
+    def set_arm_joint_angles(self, jnts):
+        inds = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]
+        self.physics.data.qpos[inds] = jnts
+        self.physics.data.qvel[inds] = 0
+        self.physics.data.qacc[inds] = 0
+        self.physics.forward()
 
 
     def get_gripper_joint_angles(self):
@@ -895,6 +904,7 @@ class BaxterMJCEnv(MJCEnv):
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
 
+        # self.render(camera_id=1, view=True)
         return self.get_obs(obs_include=obs_include, view=view), \
                self.compute_reward(), \
                self.is_done(), \
@@ -1037,11 +1047,6 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def _move_to(self, pos, gripper1, gripper2, left=True, view=False):
-        self.physics.data.qpos[8] = 0.03
-        self.physics.data.qpos[9] = -0.03
-        self.physics.data.qpos[17] = 0.03
-        self.physics.data.qpos[18] = -0.03
-        self.physics.forward()
         observations = [self.get_obs(view=False)]
         if not self._check_ik(pos, quat=DOWN_QUAT, use_right=not left):
             return observations
@@ -1055,6 +1060,7 @@ class BaxterMJCEnv(MJCEnv):
         aux_inds = ([[0,1,2]], 3) if left else ([[4,5,6]], 7)
         ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
         aux_ee_pos = [0.6, -0.5, 0.2] if left else [0.6, 0.5, 0.2]
+        end_ee_pos = [0.6, 0.5, 0.2] if left else [0.6, -0.5, 0.2]
 
         gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
 
@@ -1119,6 +1125,7 @@ class BaxterMJCEnv(MJCEnv):
         observations.append(obs)
 
         cur_iter = 0
+        max_iter = 5
         ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
         gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
         while np.any(np.abs(ee_pos - ee_above) > limit1):
@@ -1139,6 +1146,29 @@ class BaxterMJCEnv(MJCEnv):
             cur_iter += 1
             if cur_iter > max_iter: break
 
+
+        # cur_iter = 0
+        # max_iter = 10
+        # ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+        # gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+        # while np.any(np.abs(ee_pos - end_ee_pos) > limit1):
+        #     next_ee_cmd = np.minimum(np.maximum(end_ee_pos - ee_pos, -0.1*np.ones((3,))), 0.1*np.ones((3,)))
+        #     # next_ee_cmd = ee_above - ee_pos
+        #     next_cmd = np.zeros((8,))
+        #     next_cmd[inds[0]] = next_ee_cmd
+        #     next_cmd[inds[1]] = gripper2
+
+        #     cur_aux_ee_pos = self.get_right_ee_pos() if left else self.get_left_ee_pos()
+        #     next_cmd[aux_inds[0]] = aux_ee_pos - cur_aux_ee_pos
+
+        #     obs, _, _, _ = self.step(next_cmd, mode='end_effector_pos', view=view)
+        #     # observations.append((next_cmd, obs))
+        #     observations.append(obs)
+        #     ee_pos = self.get_left_ee_pos() if left else self.get_right_ee_pos()
+        #     gripper_angle = self.get_gripper_joint_angles()[1] if left else self.get_gripper_joint_angles()[0]
+        #     cur_iter += 1
+        #     if cur_iter > max_iter: break
+
         return observations
 
 
@@ -1155,15 +1185,27 @@ class BaxterMJCEnv(MJCEnv):
         return self._move_to(target_pos, 0, 1, True, view)
 
 
-    def move_left_to(self, pos1, pos2, view=True):
+    def move_left_to(self, pos1, pos2, reset_arm=True, view=True):
         if pos1[1] < -0.2 or pos2[1] < -0.2 or pos1[1] > 0.8 or pos2[1] > 0.8:
             return [self.get_obs(view=False)]
 
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=False) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=False)):
             return [self.get_obs(view=False)]
+
+        self.physics.data.qpos[8] = 0.03
+        self.physics.data.qpos[9] = -0.03
+        self.physics.data.qpos[17] = 0.03
+        self.physics.data.qpos[18] = -0.03
+        self.physics.forward()
+        start_jnts = self.get_arm_joint_angles()
+
         obs1 = self.move_left_to_grasp(pos1, view)
         obs2 = self.move_left_to_place(pos2, view)
+        if reset_arm:
+            self.set_arm_joint_angles(start_jnts)
+            self.physics.forward()
+
         return np.r_[obs1, obs2]
 
 
@@ -1180,14 +1222,26 @@ class BaxterMJCEnv(MJCEnv):
         return self._move_to(target_pos, 0, 1, False, view)
 
 
-    def move_right_to(self, pos1, pos2, view=True):
+    def move_right_to(self, pos1, pos2, reset_arm=True, view=True):
         if pos1[1] > 0.2 or pos2[1] > 0.2 or pos1[1] < -0.8 or pos2[1] < -0.8:
             return [self.get_obs(view=False)]
         if not (self._check_ik(pos1, quat=DOWN_QUAT, use_right=True) and \
                 self._check_ik(pos2, quat=DOWN_QUAT, use_right=True)):
             return [self.get_obs(view=False)]
+
+        self.physics.data.qpos[8] = 0.03
+        self.physics.data.qpos[9] = -0.03
+        self.physics.data.qpos[17] = 0.03
+        self.physics.data.qpos[18] = -0.03
+        self.physics.forward()
+        start_jnts = self.get_arm_joint_angles()
+
         obs1 = self.move_right_to_grasp(pos1, view)
         obs2 = self.move_right_to_place(pos2, view)
+        if reset_arm:
+            self.set_arm_joint_angles(start_jnts)
+            self.physics.forward()
+
         return np.r_[obs1, obs2]
 
 

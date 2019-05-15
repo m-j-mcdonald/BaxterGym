@@ -271,17 +271,22 @@
   <body name="free_body_block0">
                     <freejoint name="block0" />
                     <body name="block0" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="1" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body><body name="free_body_block1">
                     <freejoint name="block1" />
                     <body name="block1" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="1 0 0 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="1" rgba="0.75 0.5 1 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body><body name="free_body_block2">
                     <freejoint name="block2" />
                     <body name="block2" pos="0 0 0" quat="1 0 0 0">
-                        <geom mass="2" rgba="0 0 1 1 " size="0.03 0.03 0.03 " type="box" />
+                        <geom mass="1" rgba="0 0 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block3">
+                    <freejoint name="block3" />
+                    <body name="block3" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="1" rgba="1 1 0 1 " size="0.03 0.03 0.03 " type="box" />
                     </body>
                 </body></worldbody>
 
