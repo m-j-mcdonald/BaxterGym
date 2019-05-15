@@ -433,6 +433,7 @@ class MJCEnv(Env):
         if height == 0: height = self.im_height
         if width == 0: width = self.im_wid
 
+        self.physics.forward()
         pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
         if view and self.use_viewer:
             self._render_viewer(pixels)

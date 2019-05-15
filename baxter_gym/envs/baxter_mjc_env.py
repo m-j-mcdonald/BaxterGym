@@ -104,7 +104,7 @@ N_CONTACT_LIMIT = 12
 
 # START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 # START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
-START_EE = [0.6, -0.4, 0.8, 0, 0, 1, 0, 0.6, 0.4, 0.8, 0, 0, 1, 0]
+START_EE = [0.6, -0.4, 0.9, 0, 0, 1, 0, 0.6, 0.4, 0.9, 0, 0, 1, 0]
 DOWN_QUAT = [0, 0, 1, 0]
 ALT_DOWN_QUAT = [0, 0.535, 0.845, 0]
 
@@ -1202,6 +1202,7 @@ class BaxterMJCEnv(MJCEnv):
 
         obs1 = self.move_left_to_grasp(pos1, view)
         obs2 = self.move_left_to_place(pos2, view)
+
         if reset_arm:
             self.set_arm_joint_angles(start_jnts)
             self.physics.forward()

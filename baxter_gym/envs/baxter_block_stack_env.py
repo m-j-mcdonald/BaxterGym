@@ -302,6 +302,8 @@ class BaxterLeftBlockStackEnv(BaxterBlockStackEnv):
                 raise NotImplementedError('Action {0} not found.'.format(action_type))
 
             self.obs_include = old_obs_include
+
+            obs = [self.render(camera_id=1)]
             return obs[-1], self.check_goal(), self.check_goal(), {} # Reward == is done
             
         return super(BaxterBlockStackEnv, self).step(action, mode, obs_include, view, debug)
