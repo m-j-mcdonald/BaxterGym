@@ -85,11 +85,9 @@ class MJCEnv(Env):
         self._max_iter = max_iter
         self._cur_iter = 0
 
+        self._viewer = None
         if view:
-            self.cur_im = np.zeros((self.im_height, self.im_wid, 3))
-            self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
-        else:
-            self._viewer = None
+            self.add_viewer()
 
         self.render(camera_id=0)
         self.render(camera_id=0)
@@ -117,6 +115,12 @@ class MJCEnv(Env):
 
     def _init_control_info(self):
         print('No control information to initialize.')
+
+
+    def add_viewer(self):
+        if self._viewer is not None: return
+        self.cur_im = np.zeros((self.im_height, self.im_wid, 3))
+        self._launch_viewer(_CAM_WIDTH, _CAM_HEIGHT)
 
 
     def _launch_viewer(self, width, height, title='Main'):
@@ -365,6 +369,35 @@ class MJCEnv(Env):
 
         if forward:
             self.physics.forward()
+
+
+    def get_body_info(self):
+        info = {}
+        for i in range(self.physics.model.nbody):
+            info[i] = {
+                'name': self.physics.model.id2name(i, 'body'),
+                'pos': self.physics.data.xpos[i],
+                'quat': self.physics.data.xquat[i],
+            }
+
+        return info
+
+
+    def get_jnt_info(self):
+        info = {}
+        dofadr = self.physics.model.jnt_dofadr
+        for i in range(self.physics.model.njnt):
+            inds = (dofadr[i], dofadr[i+1]) if i < self.physics.model.njnts-1 else (dofadr[i], self.physics.model.njnt)
+            body_id = self.physics.model.jnt_bodyid[i]
+            info[i] = {
+                'name': self.physics.model.id2name(i, 'joint'),
+                'angle': self.physics.data.qpos[inds[0]:inds[1]],
+                'dofadr': inds,
+                'body': self.physics.model.id2name(body_id, 'body'),
+                'parent_body': self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body')
+            }
+
+        return info
 
 
     def get_geom_dimensions(self, geom_type=enums.mjtGeom.mjGEOM_BOX, geom_ind=-1):

@@ -93,7 +93,7 @@ class BaxterClothEnv(BaxterMJCEnv):
         return ind
 
 
-    def get_obs(self, obs_include=None):
+    def get_obs(self, obs_include=None, view=False):
         if obs_include is None:
             obs_include = self.obs_include
 

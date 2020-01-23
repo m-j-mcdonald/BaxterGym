@@ -321,3 +321,4 @@ class HSRIKController(object):
             elif velocities[i] <= -1.0:
                 velocities[i] = -1.0
         return velocities
+        

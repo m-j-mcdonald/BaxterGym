@@ -385,9 +385,8 @@ class BaxterMJCEnv(MJCEnv):
 
     def get_left_ee_pos(self, mujoco_frame=True):
         model = self.physics.model
-        ll_gripper_ind = model.name2id('left_gripper_l_finger_tip', 'body')
-        lr_gripper_ind = model.name2id('left_gripper_r_finger_tip', 'body')
-        pos = (self.physics.data.xpos[ll_gripper_ind] + self.physics.data.xpos[lr_gripper_ind]) / 2
+        ind = model.name2id('left_gripper', 'body')
+        pos = self.physics.data.xpos[ind].copy()
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
             pos[0] -= MUJOCO_MODEL_X_OFFSET
@@ -396,25 +395,26 @@ class BaxterMJCEnv(MJCEnv):
 
     def get_right_ee_pos(self, mujoco_frame=True):
         model = self.physics.model
-        rr_gripper_ind = model.name2id('right_gripper_r_finger_tip', 'body')
-        rl_gripper_ind = model.name2id('right_gripper_l_finger_tip', 'body')
-        pos = (self.physics.data.xpos[rr_gripper_ind] + self.physics.data.xpos[rl_gripper_ind]) / 2
+        ind = model.name2id('right_gripper', 'body')
+        pos = self.physics.data.xpos[ind].copy()
         if not mujoco_frame:
             pos[2] -= MUJOCO_MODEL_Z_OFFSET
             pos[0] -= MUJOCO_MODEL_X_OFFSET
-        return pos
+        return pos 
 
 
-    def get_left_ee_rot(self):
+    def get_left_ee_rot(self, mujoco_frame=True):
         model = self.physics.model
-        l_gripper_ind = model.name2id('left_gripper_base', 'body')
-        return self.physics.data.xquat[l_gripper_ind].copy()
+        ind = model.name2id('left_gripper', 'body')
+        quat = self.physics.data.xquat[ind].copy()
+        return quat 
 
 
-    def get_right_ee_rot(self):
+    def get_right_ee_rot(self, mujoco_frame=True):
         model = self.physics.model
-        r_gripper_ind = model.name2id('right_gripper_base', 'body')
-        return self.physics.data.xquat[r_gripper_ind].copy()
+        ind = model.name2id('right_gripper', 'body')
+        quat = self.physics.data.xquat[ind].copy()
+        return quat
 
 
     def get_item_pos(self, name, mujoco_frame=True):
@@ -494,6 +494,14 @@ class BaxterMJCEnv(MJCEnv):
 
     def set_arm_joint_angles(self, jnts):
         inds = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16]
+        self.physics.data.qpos[inds] = jnts
+        self.physics.data.qvel[inds] = 0
+        self.physics.data.qacc[inds] = 0
+        self.physics.forward()
+
+
+    def set_gripper_joint_angles(self, jnts):
+        inds = [8, 17]
         self.physics.data.qpos[inds] = jnts
         self.physics.data.qvel[inds] = 0
         self.physics.data.qacc[inds] = 0
