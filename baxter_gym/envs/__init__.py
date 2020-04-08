@@ -7,7 +7,6 @@ from baxter_gym.envs.baxter_rope_env import *
 from baxter_gym.envs.baxter_block_stack_env import *
 from baxter_gym.envs.baxter_cloth_env import *
 from baxter_gym.envs.hsr_mjc_env import *
-from baxter_gym.envs.hsr_ros_env import *
 try:
     from baxter_gym.envs.hsr_ros_env import *
 except Exception as e:

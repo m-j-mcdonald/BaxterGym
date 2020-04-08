@@ -268,7 +268,27 @@
     <body euler="0 0 0" name="table" pos="0.5 0.0 -0.4875">
       <geom name="table" rgba="0 0.5 0 1" size="1 1.5 0.4375" type="box" />
     </body>
-  <body name="cloth2_free_body"><freejoint name="cloth2" /><body name="cloth2"><geom mass="0.01" name="cloth2" rgba="0 0 1 1" size="0.02" type="sphere" /><inertial diaginertia="0.01 0.01 0.01" mass="0.1" pos="0 0 0" quat="0 0 0 1" /></body></body><body name="cloth3_free_body"><freejoint name="cloth3" /><body name="cloth3"><geom mass="0.01" name="cloth3" rgba="0 0 1 1" size="0.02" type="sphere" /><inertial diaginertia="0.01 0.01 0.01" mass="0.1" pos="0 0 0" quat="0 0 0 1" /></body></body><body name="cloth0_free_body"><freejoint name="cloth0" /><body name="cloth0"><geom mass="0.01" name="cloth0" rgba="0 0 1 1" size="0.02" type="sphere" /><inertial diaginertia="0.01 0.01 0.01" mass="0.1" pos="0 0 0" quat="0 0 0 1" /></body></body><body name="cloth4_free_body"><freejoint name="cloth4" /><body name="cloth4"><geom mass="0.01" name="cloth4" rgba="0 0 1 1" size="0.02" type="sphere" /><inertial diaginertia="0.01 0.01 0.01" mass="0.1" pos="0 0 0" quat="0 0 0 1" /></body></body><body name="cloth1_free_body"><freejoint name="cloth1" /><body name="cloth1"><geom mass="0.01" name="cloth1" rgba="0 0 1 1" size="0.02" type="sphere" /><inertial diaginertia="0.01 0.01 0.01" mass="0.1" pos="0 0 0" quat="0 0 0 1" /></body></body></worldbody>
+  <body name="free_body_block0">
+                    <freejoint name="block0" />
+                    <body name="block0" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="1" rgba="1 1 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block1">
+                    <freejoint name="block1" />
+                    <body name="block1" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="1" rgba="0.75 0.5 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block2">
+                    <freejoint name="block2" />
+                    <body name="block2" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="1" rgba="0 0 1 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body><body name="free_body_block3">
+                    <freejoint name="block3" />
+                    <body name="block3" pos="0 0 0" quat="1 0 0 0">
+                        <geom mass="1" rgba="1 1 0 1 " size="0.03 0.03 0.03 " type="box" />
+                    </body>
+                </body></worldbody>
 
   <actuator>
 
