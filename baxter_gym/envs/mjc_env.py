@@ -106,7 +106,8 @@ class MJCEnv(Env):
         ts = config.get("mjc_timestep", 0.002)
         view = config.get("view", False)
         max_iter = config.get("max_iterations", 250)
-        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, view)
+        load_render = config.get("load_render", True)
+        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, view, load_render=load_render)
 
 
     def _load_model(self):
