@@ -45,7 +45,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos',
 class MJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False, load_render=True):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -85,10 +85,11 @@ class MJCEnv(Env):
         self._max_iter = max_iter
         self._cur_iter = 0
 
+        self.load_render = load_render
         self._viewer = None
         if view:
             self.add_viewer()
-
+        
         self.render(camera_id=0)
         self.render(camera_id=0)
 
@@ -460,6 +461,7 @@ class MJCEnv(Env):
 
     def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
                overlays=(), depth=False, scene_option=None, view=True):
+        if not self.load_render: return None
         # Make friendly with dm_control or gym interface
         depth = depth or mode == 'depth_array'
         view = view or mode == 'human'
