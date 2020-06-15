@@ -226,6 +226,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
     contacts = root.find('contact')
     assets = root.find('asset')
     equality = root.find('equality')
+    actuators = root.find('actuator')
 
     compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/')
     compiler_xml = xml.fromstring(compiler_str)
@@ -272,6 +273,12 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
             compiler = elem.find('compiler')
             size = elem.find('size')
             options = elem.find('options')
+            local_actuators = elem.find('actuator')
+            for key in [compiler, size, options, local_actuators]:
+                if key is not None:
+                    elem.remove(key)
+
+            '''
             if compiler is not None:
                 elem.remove(compiler)
 
@@ -280,6 +287,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
 
             if options is not None:
                 elem.remove(options)
+            '''
 
             body = elem.find('worldbody')
             if body is not None:
@@ -289,15 +297,20 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
 
             name = elem.get('model')
             body.set('name', name)
+
+            # Set mesh
             new_assets = elem.find('assets')
             mesh = new_assets.find('mesh')
             mesh_file = mesh.get('file')
-
             path = f_name.rsplit('/', 1)[0]
             mesh.set('file', path+'/'+mesh_file)
 
             worldbody.append(body)
             assets.append(list(new_assets))
+
+            if local_actuators is not None:
+                for act in list(local_actuators):
+                    actuators.append(act)
 
         elif f_name.lower().endswith('.stl'):
             stripped_path = f_name.split('.')[0]

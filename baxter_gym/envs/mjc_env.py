@@ -60,6 +60,7 @@ class MJCEnv(Env):
         self.obs_include = obs_include
         self._joint_map_cache = {}
         self._ind_cache = {}
+        self._type_cache = {}
 
         self.im_wid, self.im_height = im_dims
         self.items = items
@@ -288,16 +289,32 @@ class MJCEnv(Env):
         return pos
 
 
-    def get_item_pos(self, name, mujoco_frame=True):
+    def get_item_pos(self, name, mujoco_frame=True, rot=False):
         model = self.physics.model
-        try:
-            ind = model.name2id(name, 'joint')
-            adr = model.jnt_qposadr[ind]
-            pos = self.physics.data.qpos[adr:adr+3].copy()
-        except Exception as e:
+        item_type = 'joint'
+        if name in self._type_cache:
+            item_type = self._type_cache[name]
+
+        pos = [np.nan, np.nan, np.nan]
+        if rot: pos.append(np.nan)
+        if item_type == 'joint':
+            try:
+                ind = model.name2id(name, 'joint')
+                adr = model.jnt_qposadr[ind]
+                if rot:
+                    pos = self.physics.data.qpos[adr+3:adr+7].copy()
+                else:
+                    pos = self.physics.data.qpos[adr:adr+3].copy()
+                self._type_cache[name] = 'joint'
+            except Exception as e:
+                item_type == 'body'
+        if item_type == 'body':
             try:
                 item_ind = model.name2id(name, 'body')
-                pos = self.physics.data.xpos[item_ind].copy()
+                arr = self.physics.data.xquat if rot else self.physics.data.xrot
+                pos = arr[item_ind].copy()
+                # pos = self.physics.data.xpos[item_ind].copy()
+                self._type_cache[name] = 'body'
             except:
                 item_ind = -1
 
@@ -305,40 +322,46 @@ class MJCEnv(Env):
 
 
     def get_item_rot(self, name, mujoco_frame=True, to_euler=False):
-        model = self.physics.model
-        try:
-            ind = model.name2id(name, 'joint')
-            adr = model.jnt_qposadr[ind]
-            rot = self.physics.data.qpos[adr+3:adr+7].copy()
-        except Exception as e:
-            try:
-                item_ind = model.name2id(name, 'body')
-                rot = self.physics.data.xquat[item_ind].copy()
-            except:
-                item_ind = -1
-
+        rot = self.get_item_pos(name, mujoco_frame, True)
         if to_euler:
             rot = T.quaternion_to_euler(rot)
 
         return rot
 
 
-    def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
+    def set_item_pos(self, name, pos, mujoco_frame=True, forward=True, rot=False):
         assert len(pos) == 3
         item_type = 'joint'
-        try:
-            ind = self.physics.model.name2id(name, 'joint')
-            adr = self.physics.model.jnt_qposadr[ind]
-            old_pos = self.physics.data.qpos[adr:adr+3]
-            self.physics.data.qpos[adr:adr+3] = pos
-        except Exception as e:
+        if name in self._type_cache:
+            item_type = self._type_cache[name]
+
+        if item_type == 'joint'
+            try:
+                ind = self.physics.model.name2id(name, 'joint')
+                adr = self.physics.model.jnt_qposadr[ind]
+                if rot:
+                    old_pos = self.physics.data.qpos[adr+3:adr+7]
+                    self.physics.data.qpos[adr+3:adr+7] = pos
+                else:
+                    old_pos = self.physics.data.qpos[adr:adr+3]
+                    self.physics.data.qpos[adr:adr+3] = pos
+                self._type_cache[name] = 'joint'
+            except Exception as e:
+                item_type = 'body'
+
+        if item_type == 'body':
             try:
                 ind = self.physics.model.name2id(name, 'body')
-                old_pos = self.physics.data.xpos[ind]
-                self.physics.data.xpos[ind] = pos
+                if rot:
+                    old_pos = self.physics.data.xquat[ind]
+                    self.physics.data.xquat[ind] = pos
+                else:
+                    old_pos = self.physics.data.xpos[ind]
+                    self.physics.data.xpos[ind] = pos
                 # self.physics.model.body_pos[ind] = pos
                 # old_pos = self.physics.model.body_pos[ind]
                 item_type = 'body'
+                self._type_cache[name] = 'body'
             except:
                 item_type = 'unknown'
                 print('Could not shift item', name)
@@ -351,24 +374,30 @@ class MJCEnv(Env):
         assert len(rot) == 3 or len(rot) == 4
         if use_euler or len(rot) == 3:
             rot = T.euler_to_quaternion(rot)
-        item_type = 'joint'
-        try:
+
+        self.set_item_pos(name, rot, mujoco_frame, forward, True)
+
+
+    def get_joints(self, jnt_names, sizes=None):
+        vals = {}
+        for i, name in enumerate(jnt_names):
             ind = self.physics.model.name2id(name, 'joint')
             adr = self.physics.model.jnt_qposadr[ind]
-            old_quat = self.physics.data.qpos[adr+3:adr+7]
-            self.physics.data.qpos[adr+3:adr+7] = rot
-        except Exception as e:
-            try:
-                ind = self.physics.model.name2id(name, 'body')
-                old_quat = self.physics.data.xquat[ind]
-                self.physics.data.xquat[ind] = rot
-                # self.physics.model.body_pos[ind] = pos
-                # old_pos = self.physics.model.body_pos[ind]
-                item_type = 'body'
-            except:
-                item_type = 'unknown'
-                print('Could not rotate item', name)
+            size = 1
+            if sizes is not None:
+                size = sizes[i]
+            vals[name] = self.physics.data.qpos[adr:adr+size]
+        return vals
 
+
+    def set_joints(self, jnts, forward=True):
+        for name, val in jnts.items():
+            ind = self.physics.model.name2id(name, 'joint')
+            adr = self.physics.model.jnt_qposadr[ind]
+            offset = 1
+            if hasattr(val, '__len__'):
+                offset = len(val)
+            self.physics.data.qpos[adr:adr+offset] = val
         if forward:
             self.physics.forward()
 
@@ -485,6 +514,7 @@ class MJCEnv(Env):
         self.cur_time = 0.
         self.prev_time = 0.
 
+        self.physics.data.qpos[:] = 0.
         self.physics.data.qvel[:] = 0.
         self.physics.data.qacc[:]= 0.
         self.physics.forward()
