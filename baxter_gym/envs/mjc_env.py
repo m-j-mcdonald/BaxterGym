@@ -190,6 +190,27 @@ class MJCEnv(Env):
             print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')
 
 
+    def step(self, action, mode=None, obs_include=None, view=False, debug=False):
+        for t in range(self.sim_freq):
+            cur_state = self.physics.data.qpos.copy()
+            self.physics.set_control(action)
+            try:
+                self.physics.step()
+            except PhysicsError as e:
+                traceback.print_exception(*sys.exc_info())
+                print '\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n'
+                self.physics.reset()
+                self.physics.data.qpos[:] = cur_state[:]
+                self.physics.forward()
+
+        return self.get_obs(obs_include=obs_include, view=view), \
+               self.compute_reward(), \
+               self.is_done(), \
+               {}
+
+
+
+
     def get_state(self):
         return self.physics.data.qpos.copy()
 
@@ -330,12 +351,11 @@ class MJCEnv(Env):
 
 
     def set_item_pos(self, name, pos, mujoco_frame=True, forward=True, rot=False):
-        assert len(pos) == 3
         item_type = 'joint'
         if name in self._type_cache:
             item_type = self._type_cache[name]
 
-        if item_type == 'joint'
+        if item_type == 'joint':
             try:
                 ind = self.physics.model.name2id(name, 'joint')
                 adr = self.physics.model.jnt_qposadr[ind]
@@ -371,7 +391,6 @@ class MJCEnv(Env):
 
 
     def set_item_rot(self, name, rot, use_euler=False, mujoco_frame=True, forward=True):
-        assert len(rot) == 3 or len(rot) == 4
         if use_euler or len(rot) == 3:
             rot = T.euler_to_quaternion(rot)
 
