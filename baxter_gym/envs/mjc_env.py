@@ -332,7 +332,7 @@ class MJCEnv(Env):
         if item_type == 'body':
             try:
                 item_ind = model.name2id(name, 'body')
-                arr = self.physics.data.xquat if rot else self.physics.data.xrot
+                arr = self.physics.data.xquat if rot else self.physics.data.xpos
                 pos = arr[item_ind].copy()
                 # pos = self.physics.data.xpos[item_ind].copy()
                 self._type_cache[name] = 'body'

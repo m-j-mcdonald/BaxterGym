@@ -265,7 +265,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
                 equality.append(eq)
 
     for f_name in include_files:
-        if f_name.lower().endswith('.mjcf'):
+        if f_name.lower().endswith('.mjcf') or f_name.lower().endswith('.xml'):
             with open(f_name, 'r+') as f:
                 data = f.read()
             elem = xml.fromstring(data)
@@ -300,13 +300,14 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
 
             # Set mesh
             new_assets = elem.find('assets')
-            mesh = new_assets.find('mesh')
-            mesh_file = mesh.get('file')
             path = f_name.rsplit('/', 1)[0]
-            mesh.set('file', path+'/'+mesh_file)
+            if new_assets is not None:
+                mesh = new_assets.find('mesh')
+                mesh_file = mesh.get('file')
+                mesh.set('file', path+'/'+mesh_file)
+                assets.append(list(new_assets))
 
             worldbody.append(body)
-            assets.append(list(new_assets))
 
             if local_actuators is not None:
                 for act in list(local_actuators):
