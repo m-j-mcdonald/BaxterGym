@@ -328,7 +328,7 @@ class MJCEnv(Env):
                     pos = self.physics.data.qpos[adr:adr+3].copy()
                 self._type_cache[name] = 'joint'
             except Exception as e:
-                item_type == 'body'
+                item_type = 'body'
         if item_type == 'body':
             try:
                 item_ind = model.name2id(name, 'body')
@@ -336,9 +336,10 @@ class MJCEnv(Env):
                 pos = arr[item_ind].copy()
                 # pos = self.physics.data.xpos[item_ind].copy()
                 self._type_cache[name] = 'body'
-            except:
+            except Exception as e:
                 item_ind = -1
-
+        
+        assert not np.any(np.isnan(pos))
         return pos
 
 

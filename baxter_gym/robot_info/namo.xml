@@ -4,7 +4,7 @@
             <joint axis="1 0 0" name="robot_x" type="slide" pos="0 0 0"/>
             <joint axis="0 1 0" name="robot_y" type="slide" pos="0 0 0"/>
             <geom name="pr2" type="cylinder" size="0.3 0.45" friction="1 1 1" />
-            <inertial pos="0 0 0" mass="10" diaginertia="0.001 0.001 0.001" />
+            <inertial pos="0 0 0" mass="5" diaginertia="0.001 0.001 0.001" />
             <body name="right_finger" pos="0.55 -0.35 0">
                 <inertial pos="0 0 0" mass="1" diaginertia="0.001 0.001 0.001" />
                 <joint name="right_finger_joint" axis="0 1 0" limited="true" range="-0.1 0.1" type="slide" />
@@ -19,9 +19,9 @@
     </worldbody>
 
     <actuator>
-        <position gear="1" kp="10" joint="robot_x" name="robot_x" forcelimited="true" forcerange="-5 5" />
-        <position gear="1" kp="10" joint="robot_y" name="robot_y" forcelimited="true" forcerange="-5 5" />
-        <position gear="1" kp="10" joint="left_finger_joint" name="left_grip" forcelimited="true" forcerange="-5 5" />
-        <position gear="1" kp="10" joint="right_finger_joint" name="right_grip" forcelimited="true" forcerange="-5 5" />
+        <position gear="1" kp="10000" joint="robot_x" name="robot_x" forcelimited="true" forcerange="-50 50" />
+        <position gear="1" kp="10000" joint="robot_y" name="robot_y" forcelimited="true" forcerange="-50 50" />
+        <position gear="1" kp="10000" joint="left_finger_joint" name="left_grip" forcelimited="true" forcerange="-50 50" />
+        <position gear="1" kp="10000" joint="right_finger_joint" name="right_grip" forcelimited="true" forcerange="-50 50" />
     </actuator>
 </mujoco>
