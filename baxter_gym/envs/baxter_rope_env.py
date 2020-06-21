@@ -8,7 +8,7 @@ IMAGE_HEIGHT = 64
 
 
 class BaxterRopeEnv(BaxterMJCEnv):
-    def __init__(self, rope_info, rope_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), view=True):
+    def __init__(self, rope_info, rope_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), mult=1e2, view=True):
         self.action_space = spaces.Box(low=-0.5, high=0.5, shape=(8,))
         rope = get_rope(rope_info['length'], 
                          rope_info['spacing'], 

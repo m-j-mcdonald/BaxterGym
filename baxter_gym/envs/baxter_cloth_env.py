@@ -25,7 +25,7 @@ IMAGE_HEIGHT = 64
 
 
 class BaxterClothEnv(BaxterMJCEnv):
-    def __init__(self, cloth_info, cloth_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), mode='end_effector_pos', view=True):
+    def __init__(self, cloth_info, cloth_pos=(0.5, -0.2, 0.0), obs_include=[], im_dims=(IMAGE_WIDTH, IMAGE_HEIGHT), mode='end_effector_pos', mult=1e2, view=True):
         self.action_space = spaces.Box(low=-0.5, high=0.5, shape=(8,))
         cloth = get_deformable_cloth(cloth_info['width'], 
                                      cloth_info['length'], 

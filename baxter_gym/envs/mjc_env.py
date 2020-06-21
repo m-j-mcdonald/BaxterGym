@@ -45,7 +45,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos',
 class MJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, view=False, load_render=True):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, mult=3e2, view=False, load_render=True, act_jnts=[]):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -54,6 +54,7 @@ class MJCEnv(Env):
         self.prev_time = 0.
         self.timestep = timestep
         self.sim_freq = sim_freq
+        self.mult = 3e2
 
         self.use_viewer = view
         self.use_glew = 'MUJOCO_GL' not in os.environ or os.environ['MUJOCO_GL'] == 'glfw'
@@ -68,9 +69,10 @@ class MJCEnv(Env):
         self.include_files = include_files
         self.include_items = include_items
         self.item_names = self._item_map.keys() + [item['name'] for item in include_items]
-        self._set_obs_info(obs_include)
+        self.act_jnts = act_jnts
 
         self._load_model()
+        self._set_obs_info(obs_include)
         for item in self.include_items:
             if item.get('is_fixed', False): continue
             name = item['name']
@@ -105,10 +107,12 @@ class MJCEnv(Env):
         im_dims = config.get("image_dimensions", (_CAM_WIDTH, _CAM_HEIGHT))
         sim_freq = config.get("sim_freq", 25)
         ts = config.get("mjc_timestep", 0.002)
+        mult = config.get("step_mult", 3e2)
         view = config.get("view", False)
         max_iter = config.get("max_iterations", 250)
         load_render = config.get("load_render", True)
-        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, view, load_render=load_render)
+        act_jnts = config.get("act_jnts", [])
+        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, mult, view, load_render=load_render, act_jnts=act_jnts)
 
 
     def _load_model(self):
@@ -193,7 +197,12 @@ class MJCEnv(Env):
     def step(self, action, mode=None, obs_include=None, view=False, debug=False):
         for t in range(self.sim_freq):
             cur_state = self.physics.data.qpos.copy()
-            self.physics.set_control(action)
+            cur_act = self.get_jnt_vec(self.act_jnts)
+            if mode is None or mode == 'position' or mode == 'joint_angle':
+                self.physics.set_control(action)
+            elif mode == 'velocity':
+                self.physics.set_control(self.mult*(action-cur_act))
+                
             try:
                 self.physics.step()
             except PhysicsError as e:
@@ -260,7 +269,7 @@ class MJCEnv(Env):
             obs_include = self.obs_include
 
         if not len(obs_include) or 'overhead_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
             inds = self._obs_inds['overhead_image']
             obs[inds[0]:inds[1]] = pixels.flatten()
 
@@ -420,6 +429,16 @@ class MJCEnv(Env):
             self.physics.data.qpos[adr:adr+offset] = val
         if forward:
             self.physics.forward()
+
+
+    def get_jnt_vec(self, jnts):
+        if not len(jnts): return self.physics.data.qpos
+        vals = []
+        for name in jnts:
+            ind = self.physics.model.name2id(name, 'joint')
+            adr = self.physics.model.jnt_qposadr[ind]
+            vals.append(adr)
+        return self.physics.data.qpos[vals]
 
 
     def get_body_info(self):

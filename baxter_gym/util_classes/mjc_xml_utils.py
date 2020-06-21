@@ -42,8 +42,8 @@ def get_param_xml(param):
             rgba = "1 1 1 1"
 
         can_body = xml.Element('body', {'name': param.name})
-        can_geom = xml.SubElement(can_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':rgba, 'friction':'1 1 1'})
-        can_intertial = xml.SubElement(can_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.1', 'diaginertia': '0.01 0.01 0.01'})
+        can_geom = xml.SubElement(can_body, 'geom', {'name':param.name, 'type':'cylinder', 'size':"{} {}".format(radius, height), 'rgba':rgba})
+        can_intertial = xml.SubElement(can_body, 'inertial', {'pos':'0 0 0', 'quat':'0 0 0 1', 'mass':'0.5', 'diaginertia': '0.01 0.01 0.01'})
         free_body.append(can_body)
         return param.name, free_body, {'contacts': contacts}
 
@@ -133,7 +133,7 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}"/>
+                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}" friction="1 1 0.1" />
                     </body>
                 </body>
                '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass)
@@ -240,7 +240,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
         name = item_dict["name"]
         item_type = item_dict["type"]
         is_fixed = item_dict.get("is_fixed", False)
-        mass = item_dict.get("mass", 0.05)
+        mass = item_dict.get("mass", 0.5)
         pos = item_dict.get("pos", (0, 0, 0))
         quat = item_dict.get("quat", (1, 0, 0, 0))
         rgba = item_dict.get("rgba", (1, 1, 1, 1))
