@@ -22,6 +22,8 @@
     <camera name="overhead_camera" pos="0 0.0 5" quat="0.707 0 0 -0.707" />
   </worldbody>
 
+  <compiler angle="radian" coordinate="local" meshdir="/home/michaelmcdonald/Documents/BaxterGym/baxter_gym/" strippath="false" texturedir="textures/" /><option gravity="0 0 -9.81" integrator="Euler" cone="pyramidal"  noslip_iterations="0" solver="Newton" timestep="0.002" />
+
   <actuator>
   </actuator>
 </mujoco>
