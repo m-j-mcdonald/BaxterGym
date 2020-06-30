@@ -133,7 +133,7 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}" friction="1 1 0.1" />
+                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}" friction="1 1 0.01" />
                     </body>
                 </body>
                '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass)
@@ -227,20 +227,23 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
     assets = root.find('asset')
     equality = root.find('equality')
     actuators = root.find('actuator')
+    sensors = root.find('sensor')
 
-    compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/')
-    compiler_xml = xml.fromstring(compiler_str)
-    root.append(compiler_xml)
+    if root.find('compiler') is None:
+        compiler_str = '<compiler coordinate="local" angle="radian" meshdir="{0}" texturedir="textures/" strippath="false" />'.format(baxter_gym.__path__[0]+'/')
+        compiler_xml = xml.fromstring(compiler_str)
+        root.append(compiler_xml)
 
-    option_str = '<option timestep="{0}"  gravity="0 0 -9.81" integrator="Euler" solver="Newton" noslip_iterations="0"/>'.format(timestep)
-    option_xml = xml.fromstring(option_str)
-    root.append(option_xml)
+    if root.find('option') is None:
+        option_str = '<option timestep="{0}"  gravity="0 0 -9.81" integrator="Euler" solver="Newton" noslip_iterations="0"/>'.format(timestep)
+        option_xml = xml.fromstring(option_str)
+        root.append(option_xml)
 
     for item_dict in include_items:
         name = item_dict["name"]
         item_type = item_dict["type"]
         is_fixed = item_dict.get("is_fixed", False)
-        mass = item_dict.get("mass", 0.5)
+        mass = item_dict.get("mass", 1.)
         pos = item_dict.get("pos", (0, 0, 0))
         quat = item_dict.get("quat", (1, 0, 0, 0))
         rgba = item_dict.get("rgba", (1, 1, 1, 1))
@@ -274,7 +277,8 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
             size = elem.find('size')
             options = elem.find('options')
             local_actuators = elem.find('actuator')
-            for key in [compiler, size, options, local_actuators]:
+            local_sensors = elem.find('sensor')
+            for key in [compiler, size, options, local_actuators, local_sensors]:
                 if key is not None:
                     elem.remove(key)
 
@@ -312,6 +316,10 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
             if local_actuators is not None:
                 for act in list(local_actuators):
                     actuators.append(act)
+
+            if local_sensors is not None:
+                for s in list(local_sensors):
+                    sensors.append(s)
 
         elif f_name.lower().endswith('.stl'):
             stripped_path = f_name.split('.')[0]

@@ -194,15 +194,32 @@ class MJCEnv(Env):
             print('\nCould not find display to launch viewer (this does not affect the ability to render images)\n')
 
 
+    @property
+    def qpos(self):
+        return self.physics.data.qpos
+
+
+    @property
+    def qvel(self):
+        return self.physics.data.qvel
+
+
+    @property
+    def qacc(self):
+        return self.physics.data.qacc
+
+
     def step(self, action, mode=None, obs_include=None, view=False, debug=False):
         for t in range(self.sim_freq):
             cur_state = self.physics.data.qpos.copy()
+            # if np.any(cur_state[-2:] < -0.2): print(cur_state[-2:])
             cur_act = self.get_jnt_vec(self.act_jnts)
             if mode is None or mode == 'position' or mode == 'joint_angle':
                 self.physics.set_control(action)
             elif mode == 'velocity':
                 self.physics.set_control(self.mult*(action-cur_act))
-                
+               
+            qacc = self.physics.data.actuator_force.copy()
             try:
                 self.physics.step()
             except PhysicsError as e:
@@ -217,7 +234,11 @@ class MJCEnv(Env):
                self.is_done(), \
                {}
 
-
+    def get_sensors(self, sensors=[]):
+        if not len(sensors):
+            return self.physics.data.sensordata.copy()
+        inds = [self.physics.model.name2id[s] for s in sensors]
+        return self.physics.data.sensordata[inds]
 
 
     def get_state(self):
@@ -547,12 +568,12 @@ class MJCEnv(Env):
 
     def reset(self):
         self._cur_iter = 0
-        # self.physics.reset()
+        self.physics.reset()
         # self._reload_viewer()
         self.ctrl_data = {}
         self.cur_time = 0.
         self.prev_time = 0.
-
+        
         self.physics.data.qpos[:] = 0.
         self.physics.data.qvel[:] = 0.
         self.physics.data.qacc[:]= 0.
