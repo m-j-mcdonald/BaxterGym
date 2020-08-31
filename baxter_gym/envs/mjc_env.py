@@ -120,8 +120,9 @@ class MJCEnv(Env):
 
 
     def _load_model(self):
-        generate_xml(SPECIFIC_ENV_XML.format(self.envid), ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
-        self.physics = Physics.from_xml_path(ENV_XML)
+        xmlpath = SPECIFIC_ENV_XML.format(self.xmlid)
+        generate_xml(BASE_XML, xmlpath, self.items, self.include_files, self.include_items, timestep=self.timestep)
+        self.physics = Physics.from_xml_path(xmlpath)
 
 
     def _init_control_info(self):
