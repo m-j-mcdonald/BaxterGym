@@ -1,4 +1,5 @@
 README.md
+setup.py
 baxter_gym.egg-info/PKG-INFO
 baxter_gym.egg-info/SOURCES.txt
 baxter_gym.egg-info/dependency_links.txt

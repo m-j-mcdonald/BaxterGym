@@ -181,9 +181,9 @@ class BaxterMJCEnv(MJCEnv):
         self.physics.forward()
 
         self.action_inds = {
-            ('baxter', 'rArmPose'): np.array(range(7)),
+            ('baxter', 'rArmPose'): np.array(list(range(7))),
             ('baxter', 'rGripper'): np.array([7]),
-            ('baxter', 'lArmPose'): np.array(range(8, 15)),
+            ('baxter', 'lArmPose'): np.array(list(range(8, 15))),
             ('baxter', 'lGripper'): np.array([15]),
         }
 
@@ -907,7 +907,7 @@ class BaxterMJCEnv(MJCEnv):
                 self.physics.step()
             except PhysicsError as e:
                 traceback.print_exception(*sys.exc_info())
-                print '\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n'
+                print('\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n')
                 self.physics.reset()
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
@@ -967,7 +967,7 @@ class BaxterMJCEnv(MJCEnv):
     @classmethod
     def init_from_plan(cls, plan, view=True):
         items = []
-        for p in plan.params.values():
+        for p in list(plan.params.values()):
             if p.is_symbol(): continue
             param_xml = get_param_xml(p)
             if param_xml is not None:
@@ -979,7 +979,7 @@ class BaxterMJCEnv(MJCEnv):
         model  = self.physics.model
         xpos = model.body_pos.copy()
         xquat = model.body_quat.copy()
-        param = plan.params.values()
+        param = list(plan.params.values())
 
         for param_name in plan.params:
             param = plan.params[param_name]

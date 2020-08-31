@@ -102,7 +102,7 @@ class HSRMJCEnv(BaxterMJCEnv):
 
         self.action_inds = {
             ('hsr', 'pose'): np.array([0,1]),
-            ('hsr', 'arm'): np.array(range(2,7)),
+            ('hsr', 'arm'): np.array(list(range(2,7))),
             ('hsr', 'gripper'): np.array([7]),
         }
 
@@ -352,7 +352,7 @@ class HSRMJCEnv(BaxterMJCEnv):
         model  = self.physics.model
         xpos = model.body_pos.copy()
         xquat = model.body_quat.copy()
-        param = plan.params.values()
+        param = list(plan.params.values())
 
         for param_name in plan.params:
             param = plan.params[param_name]

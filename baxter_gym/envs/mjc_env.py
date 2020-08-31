@@ -35,6 +35,7 @@ from baxter_gym.util_classes import transform_utils as T
 
 BASE_XML = baxter_gym.__path__[0]+'/robot_info/empty.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_empty.xml'
+SPECIFIC_ENV_XML = baxter_gym.__path__[0]+'/local/current_{0}.xml'
 
 _MAX_FRONTBUFFER_SIZE = 2048
 _CAM_WIDTH = 200
@@ -45,7 +46,7 @@ CTRL_MODES = ['joint_angle', 'end_effector', 'end_effector_pos', 'discrete_pos',
 class MJCEnv(Env):
     metadata = {'render.modes': ['human', 'rgb_array', 'depth'], 'video.frames_per_second': 67}
 
-    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, mult=3e2, view=False, load_render=True, act_jnts=[]):
+    def __init__(self, mode='end_effector', obs_include=[], items=[], include_files=[], include_items=[], im_dims=(_CAM_WIDTH, _CAM_HEIGHT), sim_freq=25, timestep=0.002, max_iter=250, mult=3e2, view=False, load_render=True, act_jnts=[], xmlid='0'):
         assert mode in CTRL_MODES, 'Env mode must be one of {0}'.format(CTRL_MODES)
         self.ctrl_mode = mode
         self.active = True
@@ -62,14 +63,16 @@ class MJCEnv(Env):
         self._joint_map_cache = {}
         self._ind_cache = {}
         self._type_cache = {}
+        self._user_data = {}
 
         self.im_wid, self.im_height = im_dims
         self.items = items
         self._item_map = {item[0]: item for item in items}
         self.include_files = include_files
         self.include_items = include_items
-        self.item_names = self._item_map.keys() + [item['name'] for item in include_items]
+        self.item_names = list(self._item_map.keys()) + [item['name'] for item in include_items]
         self.act_jnts = act_jnts
+        self.xmlid = xmlid
 
         self._load_model()
         self._set_obs_info(obs_include)
@@ -112,11 +115,12 @@ class MJCEnv(Env):
         max_iter = config.get("max_iterations", 250)
         load_render = config.get("load_render", True)
         act_jnts = config.get("act_jnts", [])
-        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, mult, view, load_render=load_render, act_jnts=act_jnts)
+        xmlid = config.get("xmlid", 0)
+        return cls(mode, obs_include, items, include_files, include_items, im_dims, sim_freq, ts, max_iter, mult, view, load_render=load_render, act_jnts=act_jnts, xmlid=xmlid)
 
 
     def _load_model(self):
-        generate_xml(BASE_XML, ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
+        generate_xml(SPECIFIC_ENV_XML.format(self.envid), ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
         self.physics = Physics.from_xml_path(ENV_XML)
 
 
@@ -224,7 +228,7 @@ class MJCEnv(Env):
                 self.physics.step()
             except PhysicsError as e:
                 traceback.print_exception(*sys.exc_info())
-                print '\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n'
+                print('\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n')
                 self.physics.reset()
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
@@ -289,26 +293,27 @@ class MJCEnv(Env):
         if obs_include is None:
             obs_include = self.obs_include
 
-        if not len(obs_include) or 'overhead_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
-            inds = self._obs_inds['overhead_image']
-            obs[inds[0]:inds[1]] = pixels.flatten()
+        if self.load_render:
+            if not len(obs_include) or 'overhead_image' in obs_include:
+                pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
+                inds = self._obs_inds['overhead_image']
+                obs[inds[0]:inds[1]] = pixels.flatten()
 
-        # if not len(obs_include) or 'forward_image' in obs_include:
-        #     pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
-        #     inds = self._obs_inds['forward_image']
-        #     obs[inds[0]:inds[1]] = pixels.flatten()
+            # if not len(obs_include) or 'forward_image' in obs_include:
+            #     pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
+            #     inds = self._obs_inds['forward_image']
+            #     obs[inds[0]:inds[1]] = pixels.flatten()
 
-        for item in self.items:
-            if not len(obs_include) or item[0] in obs_include:
-                inds = self._obs_inds[item[0]]
-                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
+            for item in self.items:
+                if not len(obs_include) or item[0] in obs_include:
+                    inds = self._obs_inds[item[0]]
+                    obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
 
         return np.array(obs)
 
 
     def get_obs_types(self):
-        return self._obs_inds.keys()
+        return list(self._obs_inds.keys())
 
 
     def get_obs_inds(self, obs_type):
@@ -415,7 +420,7 @@ class MJCEnv(Env):
                 self._type_cache[name] = 'body'
             except:
                 item_type = 'unknown'
-                print('Could not shift item', name)
+                print(('Could not shift item', name))
 
         if forward:
             self.physics.forward()
@@ -441,7 +446,7 @@ class MJCEnv(Env):
 
 
     def set_joints(self, jnts, forward=True):
-        for name, val in jnts.items():
+        for name, val in list(jnts.items()):
             ind = self.physics.model.name2id(name, 'joint')
             adr = self.physics.model.jnt_qposadr[ind]
             offset = 1
@@ -538,7 +543,12 @@ class MJCEnv(Env):
         return fovy, pos, mat
 
 
-    # def get_items_in_region()
+    def set_user_data(self, key, data):
+        self._user_data[key] = data
+
+
+    def get_user_data(self, key, default=None):
+        return self._user_data.get(key, default)
 
 
     def compute_reward(self):
@@ -597,9 +607,9 @@ class MJCEnv(Env):
     def list_joint_info(self):
         for i in range(self.physics.model.njnt):
             print('\n')
-            print('Jnt ', i, ':', self.physics.model.id2name(i, 'joint'))
-            print('Axis :', self.physics.model.jnt_axis[i])
-            print('Dof adr :', self.physics.model.jnt_dofadr[i])
+            print(('Jnt ', i, ':', self.physics.model.id2name(i, 'joint')))
+            print(('Axis :', self.physics.model.jnt_axis[i]))
+            print(('Dof adr :', self.physics.model.jnt_dofadr[i]))
             body_id = self.physics.model.jnt_bodyid[i]
-            print('Body :', self.physics.model.id2name(body_id, 'body'))
-            print('Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body'))
+            print(('Body :', self.physics.model.id2name(body_id, 'body')))
+            print(('Parent body :', self.physics.model.id2name(self.physics.model.body_parentid[body_id], 'body')))

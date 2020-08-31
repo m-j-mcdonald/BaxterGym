@@ -25,17 +25,17 @@ IMAGE_WIDTH, IMAGE_HEIGHT = (107, 80)
 # ])
 
 POSSIBLE_LEFT_BLOCK_REGION_LOCS = np.array([
-    np.array(list(itertools.product(range(47, 57, 2), range(10, 30, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(62, 74, 2), range(10, 30, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(47, 57, 2), range(40, 65, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(62, 74, 2), range(40, 65, 2)))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(47, 57, 2)), list(range(10, 30, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(62, 74, 2)), list(range(10, 30, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(47, 57, 2)), list(range(40, 65, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(62, 74, 2)), list(range(40, 65, 2))))).astype(np.float64) / 100.,
 ])
 
 POSSIBLE_RIGHT_BLOCK_REGION_LOCS = np.array([
-    np.array(list(itertools.product(range(47, 57, 2), range(-30, -10, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(62, 74, 2), range(-30, -10, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(47, 57, 2), range(-65, -40, 2)))).astype(np.float64) / 100.,
-    np.array(list(itertools.product(range(62, 74, 2), range(-65, -40, 2)))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(47, 57, 2)), list(range(-30, -10, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(62, 74, 2)), list(range(-30, -10, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(47, 57, 2)), list(range(-65, -40, 2))))).astype(np.float64) / 100.,
+    np.array(list(itertools.product(list(range(62, 74, 2)), list(range(-65, -40, 2))))).astype(np.float64) / 100.,
 ])
 
 class BaxterBlockStackEnv(BaxterMJCEnv):
@@ -86,9 +86,9 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
 
     def reset_goal(self):
         self.goal = {}
-        order = range(N_BLOCKS)
+        order = list(range(N_BLOCKS))
         random.shuffle(order)
-        height = np.random.choice(range(2, N_BLOCKS+1))
+        height = np.random.choice(list(range(2, N_BLOCKS+1)))
         for i in range(0, height):
             if i > 0:
                 pos = self.get_item_pos('block{0}'.format(order[i-1]))
@@ -131,7 +131,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
         #     self.set_item_pos('block{0}'.format(i), np.r_[locs[i], -0.02], forward=False)
         for i in range(N_BLOCKS):
             l = locs[i]
-            ind = np.random.choice(range(len(l)))
+            ind = np.random.choice(list(range(len(l))))
             loc = list(l[ind])
             self.set_item_pos('block{0}'.format(i), np.r_[loc, -0.02], forward=False)
         self.physics.forward()
@@ -139,7 +139,7 @@ class BaxterBlockStackEnv(BaxterMJCEnv):
 
 
     def _randomize_goal(self):
-        order = range(N_BLOCKS)
+        order = list(range(N_BLOCKS))
         random.shuffle(order)
         pos1 = self.get_item_pos('block{0}'.format(order[0]))
         self.goal = {}
@@ -243,7 +243,7 @@ class BaxterLeftBlockStackEnv(BaxterBlockStackEnv):
         np.random.shuffle(locs)
         for i in range(N_BLOCKS):
             l = locs[i]
-            ind = np.random.choice(range(len(l)))
+            ind = np.random.choice(list(range(len(l))))
             loc = list(l[ind])
             self.set_item_pos('block{0}'.format(i), np.r_[loc, -0.02], forward=False)
         self.physics.forward()
@@ -251,7 +251,7 @@ class BaxterLeftBlockStackEnv(BaxterBlockStackEnv):
 
 
     def _randomize_goal(self):
-        order = range(N_BLOCKS)
+        order = list(range(N_BLOCKS))
         random.shuffle(order)
         pos1 = self.get_item_pos('block{0}'.format(order[0]))
         self.goal = {}

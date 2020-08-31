@@ -85,7 +85,7 @@ class HSRMJCEnv(MJCEnv):
         self.action_inds = {
             ('hsr', 'pose'): np.array([0,1]),
             ('hsr', 'rotation'): np.array([2]),
-            ('hsr', 'arm'): np.array(range(3,8)),
+            ('hsr', 'arm'): np.array(list(range(3,8))),
             ('hsr', 'gripper'): np.array([8]),
         }
 
@@ -376,7 +376,7 @@ class HSRMJCEnv(MJCEnv):
         model  = self.physics.model
         xpos = model.body_pos.copy()
         xquat = model.body_quat.copy()
-        param = plan.params.values()
+        param = list(plan.params.values())
 
         for param_name in plan.params:
             param = plan.params[param_name]

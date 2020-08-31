@@ -51,7 +51,7 @@ _AXES2TUPLE = {
     "rzyz": (2, 1, 1, 1),
 }
 
-_TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
+_TUPLE2AXES = dict((v, k) for k, v in list(_AXES2TUPLE.items()))
 
 
 def euler_to_quaternion(rpy, order="wxyz"):

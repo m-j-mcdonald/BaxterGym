@@ -165,8 +165,8 @@ class HSRRosEnv(HSRMJCEnv):
             grip = -50 if hsr.gripper[:, t] < 0.6 else 50
             action = np.r_[hsr.pose[:,t], hsr.arm[:,t], grip]
             self.step(action, mode="joint_angle")
-        print self.physics.data.qpos
-        print self.physics.data.ctrl
+        print(self.physics.data.qpos)
+        print(self.physics.data.ctrl)
         import ipdb; ipdb.set_trace()
 
 

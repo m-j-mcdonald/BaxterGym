@@ -331,7 +331,7 @@ class BaxterClothEnv(BaxterMJCEnv):
             raise AttributeError('This environment does not contain a cloth.')
 
         n_folds = np.random.randint(3, 15)
-        inds = np.random.choice(range(25, 25+2*self.cloth_width*self.cloth_length-1), n_folds)
+        inds = np.random.choice(list(range(25, 25+2*self.cloth_width*self.cloth_length-1)), n_folds)
         for i in inds:
             self.physics.data.qpos[i] = np.random.uniform(-1, 1)
         self.physics.forward()
