@@ -14,7 +14,7 @@ try:
     from dm_control import render
 except:
     from dm_control import _render as render
-from dm_control.mujoco import Physics
+from dm_control.mujoco import Physics, TextOverlay
 from dm_control.mujoco.wrapper.mjbindings import enums
 from dm_control.rl.control import PhysicsError
 from dm_control.viewer import gui
@@ -415,7 +415,7 @@ class MJCEnv(Env):
                 else:
                     old_pos = self.physics.data.xpos[ind]
                     self.physics.data.xpos[ind] = pos
-                # self.physics.model.body_pos[ind] = pos
+                self.physics.model.body_pos[ind] = pos
                 # old_pos = self.physics.model.body_pos[ind]
                 item_type = 'body'
                 self._type_cache[name] = 'body'
@@ -544,6 +544,22 @@ class MJCEnv(Env):
         return fovy, pos, mat
 
 
+    def record_video(self, fname, actions=None, states=None, height=0, width=0, mode='position'):
+        if not self.load_render:
+            raise AssertionError('Cannot record video if the renderer is not loaded')
+        elif actiosn is None and states is None:
+            raise AssertionError('Must pass either action or state trajectory to record video')
+
+        ims = []
+        buf = actions if actios is not None else states
+        for step in buf:
+            if actions is not None: self.step(step, mode=mode)
+            if states is not None: self.set_state(step)
+            im = self.render(camera_id=camera_id, height=height, width=width, view=False)
+            ims.append(im)
+        np.save(fname, ims)
+
+
     def set_user_data(self, key, data):
         self._user_data[key] = data
 
@@ -558,6 +574,10 @@ class MJCEnv(Env):
 
     def is_done(self):
         return self._cur_iter >= self._max_iter
+
+
+    def get_text_overlay(self, title='', body='', style='normal', position='top left'):
+        return TextOverlay(title, body, style, position)
 
 
     def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
