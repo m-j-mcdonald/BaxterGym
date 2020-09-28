@@ -214,7 +214,7 @@ class MJCEnv(Env):
         return self.physics.data.qacc
 
 
-    def step(self, action, mode=None, obs_include=None, view=False, debug=False):
+    def step(self, action, mode=None, obs_include=None, gen_obs=False, view=False, debug=False):
         for t in range(self.sim_freq):
             cur_state = self.physics.data.qpos.copy()
             # if np.any(cur_state[-2:] < -0.2): print(cur_state[-2:])
@@ -234,6 +234,7 @@ class MJCEnv(Env):
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
 
+        if not gen_obs: return
         return self.get_obs(obs_include=obs_include, view=view), \
                self.compute_reward(), \
                self.is_done(), \
@@ -581,7 +582,7 @@ class MJCEnv(Env):
 
 
     def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
-               overlays=(), depth=False, scene_option=None, view=True):
+               overlays=(), depth=False, scene_option=None, view=False):
         if not self.load_render: return None
         # Make friendly with dm_control or gym interface
         depth = depth or mode == 'depth_array'
