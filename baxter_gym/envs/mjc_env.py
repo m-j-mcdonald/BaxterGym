@@ -9,11 +9,6 @@ import traceback
 import sys
 import xml.etree.ElementTree as xml
 
-
-try:
-    from dm_control import render
-except:
-    from dm_control import _render as render
 from dm_control.mujoco import Physics, TextOverlay
 from dm_control.mujoco.wrapper.mjbindings import enums
 from dm_control.rl.control import PhysicsError
@@ -92,8 +87,14 @@ class MJCEnv(Env):
         self._cur_iter = 0
 
         self.load_render = load_render
+        if self.load_render:
+            try:
+                from dm_control import render
+            except:
+                from dm_control import _render as render
+
         self._viewer = None
-        if view:
+        if view and self.load_render:
             self.add_viewer()
         
         self.render(camera_id=0)
