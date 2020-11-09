@@ -89,21 +89,22 @@ def get_param_xml(param):
 
 
 def get_item_from_mesh(name, mesh_name, mesh_file=None, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False):
+    mass_str = 'mass="{0}"'.format(mass) if mass is not None else ''
     if is_fixed:
         body == '''
                 <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                    <geom type="mesh" mesh="{1}" rgba="{9}" mass="{10}"/>
+                    <geom type="mesh" mesh="{1}" rgba="{9}" {10}/>
                 </body>
-               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass)     
+               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass_str) 
     else:
         body = '''
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                        <geom type="mesh" mesh="{1}" rgba="{9}" mass="{10}"/>
+                        <geom type="mesh" mesh="{1}" rgba="{9}" {10}/>
                     </body>
                 </body>
-               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass)
+               '''.format(name, mesh_name, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], rgba, mass_str)
                
     if mesh_file is not None:
         new_assets = {'assets': [xml.Element('mesh', {'name':name, 'file':mesh_file})]}
@@ -121,22 +122,23 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
     color = ''
     for c in rgba:
         color += "{0} ".format(c)
+    mass_str = 'mass="{0}"'.format(mass) if mass is not None else ''
 
     if is_fixed:
         body = '''
             <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                <geom type="{1}" size="{9}" rgba="{10}" mass="{11}"/>
+                <geom type="{1}" size="{9}" rgba="{10}" {11}/>
             </body>
-           '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass)
+           '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass_str)
     else:
         body = '''
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                        <geom type="{1}" size="{9}" rgba="{10}" mass="{11}" friction="1 1 0.01" />
+                        <geom type="{1}" size="{9}" rgba="{10}" {11} friction="1 1 0.01" />
                     </body>
                 </body>
-               '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass)
+               '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass_str)
 
     return name, xml.fromstring(body), {}
 
@@ -243,7 +245,7 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
         name = item_dict["name"]
         item_type = item_dict["type"]
         is_fixed = item_dict.get("is_fixed", False)
-        mass = item_dict.get("mass", 1.)
+        mass = item_dict.get("mass", None)
         pos = item_dict.get("pos", (0, 0, 0))
         quat = item_dict.get("quat", (1, 0, 0, 0))
         rgba = item_dict.get("rgba", (1, 1, 1, 1))

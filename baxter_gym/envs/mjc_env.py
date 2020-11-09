@@ -215,7 +215,7 @@ class MJCEnv(Env):
         return self.physics.data.qacc
 
 
-    def step(self, action, mode=None, obs_include=None, gen_obs=False, view=False, debug=False):
+    def step(self, action, mode=None, obs_include=None, gen_obs=True, view=False, debug=False):
         for t in range(self.sim_freq):
             cur_state = self.physics.data.qpos.copy()
             # if np.any(cur_state[-2:] < -0.2): print(cur_state[-2:])
@@ -297,7 +297,7 @@ class MJCEnv(Env):
             obs_include = self.obs_include
 
         if self.load_render:
-            if not len(obs_include) or 'overhead_image' in obs_include:
+            if view or not len(obs_include) or 'overhead_image' in obs_include:
                 pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
                 inds = self._obs_inds['overhead_image']
                 obs[inds[0]:inds[1]] = pixels.flatten()
@@ -468,6 +468,12 @@ class MJCEnv(Env):
             adr = self.physics.model.jnt_qposadr[ind]
             vals.append(adr)
         return self.physics.data.qpos[vals]
+
+
+    def get_disp(self, body1, body2):
+        pos1 = self.get_item_pos(body1)
+        pos2 = self.get_itme_pos(body2)
+        return pos2 - pos1
 
 
     def get_body_info(self):
