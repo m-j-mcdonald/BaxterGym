@@ -307,10 +307,10 @@ class MJCEnv(Env):
             #     inds = self._obs_inds['forward_image']
             #     obs[inds[0]:inds[1]] = pixels.flatten()
 
-            for item in self.items:
-                if not len(obs_include) or item[0] in obs_include:
-                    inds = self._obs_inds[item[0]]
-                    obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
+        for item in self.items:
+            if not len(obs_include) or item[0] in obs_include:
+                inds = self._obs_inds[item[0]]
+                obs[inds[0]:inds[1]] = self.get_item_pos(item[0])
 
         return np.array(obs)
 

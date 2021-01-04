@@ -127,7 +127,7 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
     if is_fixed:
         body = '''
             <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                <geom type="{1}" size="{9}" rgba="{10}" {11}/>
+                <geom name="{0}" type="{1}" size="{9}" rgba="{10}" {11}/>
             </body>
            '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass_str)
     else:
@@ -135,7 +135,7 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
-                        <geom type="{1}" size="{9}" rgba="{10}" {11} friction="1 1 0.01" />
+                        <geom name="{0}" type="{1}" size="{9}" rgba="{10}" {11} friction="1 1 0.01" />
                     </body>
                 </body>
                '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass_str)
