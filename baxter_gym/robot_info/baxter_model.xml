@@ -328,7 +328,7 @@ Adapted from: https://github.com/StanfordVL/robosuite/blob/master/robosuite/mode
                             </body>
                             <body name="left_gripper_r_finger" pos="0 0.0015 0.02">
                                 <inertial pos="0 0 0" mass="0.02" diaginertia="0.01 0.01 0.01" />
-                                <joint damping="0" name="left_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 -1 0" type="slide" range="0.030833" />
+                                <joint damping="0" name="left_gripper_r_finger_joint" limited="true" armature=".01" pos="0 0 0" axis="0 -1 0" type="slide" range="0 0.030833" />
                                 <!-- <geom class="viz" mesh="extended_narrow" euler="1.57 -1.57 0" rgba="0.1 0.1 0.1 1"/> -->
                                 <!-- <geom size="0.005 0.00675 0.05635" pos="0 -0.01725 0.0615" type="box" rgba="0.1 0.1 0.1 1"/> -->
                                 <!-- <geom size="0.005 0.025 0.0085" pos="0.005 0.003 0.0083" type="box" rgba="0.1 0.1 0.1 1"/> -->
