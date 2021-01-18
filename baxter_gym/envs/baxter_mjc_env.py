@@ -19,6 +19,7 @@ from tkinter import TclError
 # except:
 #     USE_OPENRAVE = False
 USE_OPENRAVE = False
+import pybullet as P
 
 try:
     from dm_control import render
@@ -42,7 +43,7 @@ from baxter_gym.envs import MJCEnv
 from baxter_gym.util_classes.ik_controller import BaxterIKController
 from baxter_gym.util_classes.mjc_xml_utils import *
 from baxter_gym.util_classes import transform_utils as T
-
+from core.util_classes.robots import *
 
 BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_model.xml'
 ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
@@ -91,7 +92,9 @@ BAXTER_GAINS = {
     'right_gripper_l_finger_joint': (1000, 0.1, 0.01),
     'right_gripper_r_finger_joint': (1000, 0.1, 0.01),
 }
-ERROR_COEFF = 1e3
+ERROR_COEFF = 1e2
+OPEN_VAL = 50
+CLOSE_VAL = -50
 
 _MAX_FRONTBUFFER_SIZE = 2048
 _CAM_WIDTH = 200
@@ -104,7 +107,7 @@ N_CONTACT_LIMIT = 12
 
 # START_EE = [0.6, -0.5, 0.7, 0, 0, 1, 0, 0.6, 0.5, 0.7, 0, 0, 1, 0]
 # START_EE = [0.6, -0.5, 0.9, 0, 0, 1, 0, 0.6, 0.5, 0.9, 0, 0, 1, 0]
-START_EE = [0.6, -0.4, 0.9, 0, 0, 1, 0, 0.6, 0.4, 0.9, 0, 0, 1, 0]
+START_EE = [0.6, -0.4, 0.9, 0, 1, 0, 0, 0.6, 0.4, 0.9, 0, 1, 0, 0]
 DOWN_QUAT = [0, 0, 1, 0]
 ALT_DOWN_QUAT = [0, 0.535, 0.845, 0]
 
@@ -169,15 +172,14 @@ class BaxterMJCEnv(MJCEnv):
                 'ci': 0.,
             }
 
-        if USE_OPENRAVE:
-            env = openravepy.Environment()
-            self._ikbody = OpenRAVEBody(env, 'baxter', Baxter())
-        else:
-            self._ikcontrol = BaxterIKController(lambda: self.get_arm_joint_angles())
+       
+        P.connect(P.DIRECT)
+        self.geom = Baxter()
+        self.geom.setup()
 
         # Start joints with grippers pointing downward
-        self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], True, False)
-        self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], False, False)
+        self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], 'right', False)
+        self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], 'left', False)
         self.physics.forward()
 
         self.action_inds = {
@@ -307,7 +309,7 @@ class BaxterMJCEnv(MJCEnv):
             obs_include = self.obs_include
 
         if not len(obs_include) or 'overhead_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=False)
+            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
             inds = self._obs_inds['overhead_image']
             obs[inds[0]:inds[1]] = pixels.flatten()
 
@@ -417,70 +419,70 @@ class BaxterMJCEnv(MJCEnv):
         return quat
 
 
-    def get_item_pos(self, name, mujoco_frame=True):
-        model = self.physics.model
-        try:
-            ind = model.name2id(name, 'joint')
-            adr = model.jnt_qposadr[ind]
-            pos = self.physics.data.qpos[adr:adr+3].copy()
-        except Exception as e:
-            try:
-                item_ind = model.name2id(name, 'body')
-                pos = self.physics.data.xpos[item_ind].copy()
-            except:
-                item_ind = -1
+    #def get_item_pos(self, name, mujoco_frame=True):
+    #    model = self.physics.model
+    #    try:
+    #        ind = model.name2id(name, 'joint')
+    #        adr = model.jnt_qposadr[ind]
+    #        pos = self.physics.data.qpos[adr:adr+3].copy()
+    #    except Exception as e:
+    #        try:
+    #            item_ind = model.name2id(name, 'body')
+    #            pos = self.physics.data.xpos[item_ind].copy()
+    #        except:
+    #            item_ind = -1
 
-        if not mujoco_frame:
-            pos[2] -= MUJOCO_MODEL_Z_OFFSET
-            pos[0] -= MUJOCO_MODEL_X_OFFSET
-        return pos
-
-
-    def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
-        if not mujoco_frame:
-            pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
-
-        item_type = 'joint'
-        try:
-            ind = self.physics.model.name2id(name, 'joint')
-            adr = self.physics.model.jnt_qposadr[ind]
-            old_pos = self.physics.data.qpos[adr:adr+3]
-            self.physics.data.qpos[adr:adr+3] = pos
-        except Exception as e:
-            try:
-                ind = self.physics.model.name2id(name, 'body')
-                old_pos = self.physics.data.xpos[ind]
-                self.physics.data.xpos[ind] = pos
-                # self.physics.model.body_pos[ind] = pos
-                # old_pos = self.physics.model.body_pos[ind]
-                item_type = 'body'
-            except:
-                item_type = 'unknown'
-
-        if forward:
-            self.physics.forward()
-        # try:
-        #     self.physics.forward()
-        # except PhysicsError as e:
-        #     print e
-        #     traceback.print_exception(*sys.exc_info())
-        #     print '\n\n\n\nERROR IN SETTING {0} POSE.\nPOSE TYPE: {1}.\nRESETTING SIMULATION.\n\n\n\n'.format(name, item_type)
-        #     qpos = self.physics.data.qpos.copy()
-        #     xpos = self.physics.data.xpos.copy()
-        #     if item_type == 'joint':
-        #         qpos[adr:adr+3] = old_pos
-        #     elif item_type == 'body':
-        #         xpos[ind] = old_pos
-        #     self.physics.reset()
-        #     self.physics.data.qpos[:] = qpos[:]
-        #     self.physics.data.xpos[:] = xpos[:]
-        #     self.physics.forward()
+    #    if not mujoco_frame:
+    #        pos[2] -= MUJOCO_MODEL_Z_OFFSET
+    #        pos[0] -= MUJOCO_MODEL_X_OFFSET
+    #    return pos
 
 
-    # def get_pos_from_label(self, label, mujoco_frame=True):
-    #     if label in self._item_map:
-    #         return self.get_item_pos(label, mujoco_frame)
-    #     return None
+    #def set_item_pos(self, name, pos, mujoco_frame=True, forward=True):
+    #    if not mujoco_frame:
+    #        pos = [pos[0]+MUJOCO_MODEL_X_OFFSET, pos[1], pos[2]+MUJOCO_MODEL_Z_OFFSET]
+
+    #    item_type = 'joint'
+    #    try:
+    #        ind = self.physics.model.name2id(name, 'joint')
+    #        adr = self.physics.model.jnt_qposadr[ind]
+    #        old_pos = self.physics.data.qpos[adr:adr+3]
+    #        self.physics.data.qpos[adr:adr+3] = pos
+    #    except Exception as e:
+    #        try:
+    #            ind = self.physics.model.name2id(name, 'body')
+    #            old_pos = self.physics.data.xpos[ind]
+    #            self.physics.data.xpos[ind] = pos
+    #            # self.physics.model.body_pos[ind] = pos
+    #            # old_pos = self.physics.model.body_pos[ind]
+    #            item_type = 'body'
+    #        except:
+    #            item_type = 'unknown'
+
+    #    if forward:
+    #        self.physics.forward()
+    #    # try:
+    #    #     self.physics.forward()
+    #    # except PhysicsError as e:
+    #    #     print e
+    #    #     traceback.print_exception(*sys.exc_info())
+    #    #     print '\n\n\n\nERROR IN SETTING {0} POSE.\nPOSE TYPE: {1}.\nRESETTING SIMULATION.\n\n\n\n'.format(name, item_type)
+    #    #     qpos = self.physics.data.qpos.copy()
+    #    #     xpos = self.physics.data.xpos.copy()
+    #    #     if item_type == 'joint':
+    #    #         qpos[adr:adr+3] = old_pos
+    #    #     elif item_type == 'body':
+    #    #         xpos[ind] = old_pos
+    #    #     self.physics.reset()
+    #    #     self.physics.data.qpos[:] = qpos[:]
+    #    #     self.physics.data.xpos[:] = xpos[:]
+    #    #     self.physics.forward()
+
+
+    ## def get_pos_from_label(self, label, mujoco_frame=True):
+    ##     if label in self._item_map:
+    ##         return self.get_item_pos(label, mujoco_frame)
+    ##     return None
 
 
     def get_joint_angles(self):
@@ -726,70 +728,95 @@ class BaxterMJCEnv(MJCEnv):
                 r_jnts[i] = right_DOF_limits[1][i]
 
 
-    def _calc_ik(self, pos, quat, use_right=True, check_limits=True):
+    def _calc_ik(self, pos, quat, arm, check_limits=True):
         arm_jnts = self.get_arm_joint_angles()
         grip_jnts = self.get_gripper_joint_angles()
-        if USE_OPENRAVE:
-            self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
+        lb, ub = self.geom.get_arm_bnds()
+        ranges = (np.array(ub) - np.array(lb)).tolist()
+        jnt_ids = sorted(self.geom.get_free_inds())
+        jnts = P.getJointStates(self.geom.id, jnt_ids)
+        rest_poses = [j[0] for j in jnts]
+        manip_id = self.geom.get_ee_link(arm)
+        damp = (0.1 * np.ones(len(jnt_ids))).tolist()
+        joint_pos = P.calculateInverseKinematics(self.geom.id,
+                                                 manip_id,
+                                                 pos,
+                                                 quat,
+                                                 lowerLimits=lb,
+                                                 upperLimits=ub,
+                                                 jointRanges=ranges,
+                                                 restPoses=rest_poses,
+                                                 jointDamping=damp,
+                                                 maxNumIterations=128)
+        inds = list(self.geom.get_free_inds(arm))
+        joint_pos = np.array(joint_pos)[inds].tolist()
+        return joint_pos
 
-            dof_map = {
-                'rArmPose': arm_jnts[:7],
-                'rGripper': grip_jnts[0],
-                'lArmPose': arm_jnts[7:],
-                'lGripper': grip_jnts[1],
-            }
+    #def _calc_ik(self, pos, quat, use_right=True, check_limits=True):
+    #    arm_jnts = self.get_arm_joint_angles()
+    #    grip_jnts = self.get_gripper_joint_angles()
+    #    if USE_OPENRAVE:
+    #        self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
 
-            manip_name = 'right_arm' if use_right else 'left_arm'
-            trans = np.zeros((4, 4))
-            trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-            trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
-            trans[3, 3] = 1
+    #        dof_map = {
+    #            'rArmPose': arm_jnts[:7],
+    #            'rGripper': grip_jnts[0],
+    #            'lArmPose': arm_jnts[7:],
+    #            'lGripper': grip_jnts[1],
+    #        }
 
-            jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+    #        manip_name = 'right_arm' if use_right else 'left_arm'
+    #        trans = np.zeros((4, 4))
+    #        trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
+    #        trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
+    #        trans[3, 3] = 1
 
-        else:
-            cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
-            jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
+    #        jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
 
-        if use_right:
-            if jnt_cmd is None:
-                print('Cannot complete action; ik will cause unstable control')
-                return arm_jnts[:7]
-        else:
-            if jnt_cmd is None:
-                print('Cannot complete action; ik will cause unstable control')
-                return arm_jnts[7:]
+    #    else:
+    #        cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
+    #        jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
-        return jnt_cmd
+    #    if use_right:
+    #        if jnt_cmd is None:
+    #            print('Cannot complete action; ik will cause unstable control')
+    #            return arm_jnts[:7]
+    #    else:
+    #        if jnt_cmd is None:
+    #            print('Cannot complete action; ik will cause unstable control')
+    #            return arm_jnts[7:]
+
+    #    return jnt_cmd
 
 
-    def _check_ik(self, pos, quat=DOWN_QUAT, use_right=True):
-        if USE_OPENRAVE:
-            arm_jnts = self.get_arm_joint_angles()
-            grip_jnts = self.get_gripper_joint_angles()
-            self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
+    #def _check_ik(self, pos, quat=DOWN_QUAT, use_right=True):
+    #    if USE_OPENRAVE:
+    #        arm_jnts = self.get_arm_joint_angles()
+    #        grip_jnts = self.get_gripper_joint_angles()
+    #        self._clip_joint_angles(arm_jnts[:7], grip_jnts[:1], arm_jnts[7:], grip_jnts[1:])
 
-            dof_map = {
-                'rArmPose': arm_jnts[:7],
-                'rGripper': grip_jnts[0],
-                'lArmPose': arm_jnts[7:],
-                'lGripper': grip_jnts[1],
-            }
+    #        dof_map = {
+    #            'rArmPose': arm_jnts[:7],
+    #            'rGripper': grip_jnts[0],
+    #            'lArmPose': arm_jnts[7:],
+    #            'lGripper': grip_jnts[1],
+    #        }
 
-            manip_name = 'right_arm' if use_right else 'left_arm'
-            trans = np.zeros((4, 4))
-            trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
-            trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
-            trans[3, 3] = 1
-            jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
-        else:
-            cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
-            jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
+    #        manip_name = 'right_arm' if use_right else 'left_arm'
+    #        trans = np.zeros((4, 4))
+    #        trans[:3, :3] = openravepy.matrixFromQuat(quat)[:3,:3]
+    #        trans[:3, 3] = pos - np.array([MUJOCO_MODEL_X_OFFSET, 0, 0])
+    #        trans[3, 3] = 1
+    #        jnt_cmd = self._ikbody.get_close_ik_solution(manip_name, trans, dof_map)
+    #    else:
+    #        cmd = {'dpos': pos+np.array([0,0,MUJOCO_MODEL_Z_OFFSET]), 'rotation': [quat[1], quat[2], quat[3], quat[0]]}
+    #        jnt_cmd = self._ikcontrol.joint_positions_for_eef_command(cmd, use_right)
 
-        return jnt_cmd is not None
+    #    return jnt_cmd is not None
 
 
     def step(self, action, mode=None, obs_include=None, view=False, debug=False):
+        start_t = time.time()
         if mode is None:
             mode = self.ctrl_mode
 
@@ -816,10 +843,8 @@ class BaxterMJCEnv(MJCEnv):
             cur_left_ee_pos = self.get_left_ee_pos()
             cur_left_ee_rot = self.get_left_ee_rot()
             target_right_ee_pos = cur_right_ee_pos + action[:3]
-            target_right_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_right_ee_rot = action[3:7] # cur_right_ee_rot + action[3:7]
             target_left_ee_pos = cur_left_ee_pos + action[8:11]
-            target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_left_ee_rot = action[11:15] # cur_left_ee_rot + action[11:15]
 
             # target_right_ee_rot /= np.linalg.norm(target_right_ee_rot)
@@ -827,11 +852,11 @@ class BaxterMJCEnv(MJCEnv):
 
             right_cmd = self._calc_ik(target_right_ee_pos, 
                                       target_right_ee_rot, 
-                                      use_right=True)
+                                      'right')
 
             left_cmd = self._calc_ik(target_left_ee_pos, 
                                      target_left_ee_rot, 
-                                     use_right=False)
+                                     'left')
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
@@ -844,20 +869,18 @@ class BaxterMJCEnv(MJCEnv):
             cur_left_ee_pos = self.get_left_ee_pos()
 
             target_right_ee_pos = cur_right_ee_pos + action[:3]
-            target_right_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_right_ee_rot = START_EE[3:7]
             target_left_ee_pos = cur_left_ee_pos + action[4:7]
-            target_left_ee_pos[2] -= MUJOCO_MODEL_Z_OFFSET
             target_left_ee_rot = START_EE[10:14]
 
 
             right_cmd = self._calc_ik(target_right_ee_pos, 
                                       target_right_ee_rot, 
-                                      use_right=True)
+                                      'right')
 
             left_cmd = self._calc_ik(target_left_ee_pos, 
                                      target_left_ee_rot, 
-                                     use_right=False)
+                                     'left')
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
@@ -892,10 +915,10 @@ class BaxterMJCEnv(MJCEnv):
             cmd =  ERROR_COEFF * error
             # cmd[cmd > 0.25] = 0.25
             # cmd[cmd < -0.25] = -0.25
-            cmd[7] = 50 if r_grip > 0.0165 else -50
-            cmd[8] = -cmd[7]
-            cmd[16] = 50 if l_grip > 0.0165 else -50
-            cmd[17] = -cmd[16]
+            cmd[7] = OPEN_VAL if r_grip > 0.0165 else CLOSE_VAL
+            cmd[8] = cmd[7]
+            cmd[16] = OPEN_VAL if l_grip > 0.0165 else CLOSE_VAL
+            cmd[17] = cmd[16]
 
             # cmd[7] = 0.03 if r_grip > 0.0165 else -0.01
             # cmd[8] = -cmd[7]
@@ -950,8 +973,8 @@ class BaxterMJCEnv(MJCEnv):
         # self.cur_time = 0.
         # self.prev_time = 0.
         self._cur_iter = 0
-        self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], True, False)
-        self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], False, False)
+        self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], 'right', False)
+        self.physics.data.qpos[10:17] = self._calc_ik(START_EE[7:10], START_EE[10:14], 'left', False)
 
         obs = super(BaxterMJCEnv, self).reset()
         for joint in BAXTER_GAINS:
