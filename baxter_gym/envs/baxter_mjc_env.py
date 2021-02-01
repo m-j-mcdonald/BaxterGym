@@ -46,8 +46,8 @@ from baxter_gym.util_classes import transform_utils as T
 from core.util_classes.robots import *
 
 BASE_VEL_XML = baxter_gym.__path__[0]+'/robot_info/baxter_model.xml'
-ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
-
+# ENV_XML = baxter_gym.__path__[0]+'/robot_info/current_baxter_env.xml'
+SPECIFIC_ENV_XML = baxter_gym.__path__[0]+'/local/current_baxter_{0}.xml'
 
 MUJOCO_JOINT_ORDER = ['right_s0', 'right_s1', 'right_e0', 'right_e1', 'right_w0', 'right_w1', 'right_w2', 'right_gripper_l_finger_joint', 'right_gripper_r_finger_joint',\
                       'left_s0', 'left_s1', 'left_e0', 'left_e1', 'left_w0', 'left_w1', 'left_w2', 'left_gripper_l_finger_joint', 'left_gripper_r_finger_joint']
@@ -172,10 +172,15 @@ class BaxterMJCEnv(MJCEnv):
                 'ci': 0.,
             }
 
-       
-        P.connect(P.DIRECT)
+        
+        if not P.getConnectionInfo()['isConnected']:
+            P.connect(P.DIRECT)
+
         self.geom = Baxter()
         self.geom.setup()
+        self._jnt_inds = {}
+        for key, jnts in self.geom.jnt_names.items():
+            self._jnt_inds[key] = [self.physics.model.name2id(jnt, 'joint') for jnt in jnts]
 
         # Start joints with grippers pointing downward
         self.physics.data.qpos[1:8] = self._calc_ik(START_EE[:3], START_EE[3:7], 'right', False)
@@ -191,8 +196,9 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def _load_model(self):
-        generate_xml(BASE_VEL_XML, ENV_XML, self.items, self.include_files, self.include_items, timestep=self.timestep)
-        self.physics = Physics.from_xml_path(ENV_XML)
+        xmlpath = SPECIFIC_ENV_XML.format(self.xmlid)
+        generate_xml(BASE_VEL_XML, xmlpath, self.items, self.include_files, self.include_items, timestep=self.timestep)
+        self.physics = Physics.from_xml_path(xmlpath)
 
 
     # def _launch_viewer(self, width, height, title='Main'):
@@ -308,25 +314,30 @@ class BaxterMJCEnv(MJCEnv):
         if obs_include is None:
             obs_include = self.obs_include
 
-        if not len(obs_include) or 'overhead_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
-            inds = self._obs_inds['overhead_image']
-            obs[inds[0]:inds[1]] = pixels.flatten()
+        if self.load_render:
+            if not len(obs_include) or 'overhead_image' in obs_include:
+                pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
+                view = False
+                inds = self._obs_inds['overhead_image']
+                obs[inds[0]:inds[1]] = pixels.flatten()
 
-        if not len(obs_include) or 'forward_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
-            inds = self._obs_inds['forward_image']
-            obs[inds[0]:inds[1]] = pixels.flatten()
+            if not len(obs_include) or 'forward_image' in obs_include:
+                pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)
+                view = False
+                inds = self._obs_inds['forward_image']
+                obs[inds[0]:inds[1]] = pixels.flatten()
 
-        if not len(obs_include) or 'right_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=2, view=False)
-            inds = self._obs_inds['right_image']
-            obs[inds[0]:inds[1]] = pixels.flatten()
+            if not len(obs_include) or 'right_image' in obs_include:
+                pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=2, view=view)
+                view = False
+                inds = self._obs_inds['right_image']
+                obs[inds[0]:inds[1]] = pixels.flatten()
 
-        if not len(obs_include) or 'left_image' in obs_include:
-            pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=3, view=False)
-            inds = self._obs_inds['left_image']
-            obs[inds[0]:inds[1]] = pixels.flatten()
+            if not len(obs_include) or 'left_image' in obs_include:
+                pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=3, view=view)
+                view = False
+                inds = self._obs_inds['left_image']
+                obs[inds[0]:inds[1]] = pixels.flatten()
 
         if not len(obs_include) or 'joints' in obs_include:
             jnts = self.get_joint_angles()
@@ -418,6 +429,33 @@ class BaxterMJCEnv(MJCEnv):
         quat = self.physics.data.xquat[ind].copy()
         return quat
 
+
+    def get_item_pos(self, name, mujoco_frame=True, rot=False):
+        if name.find('ee_pos') >= 0:
+            if name.find('left') >= 0:
+                return self.get_left_ee_pos(mujoco_frame)
+            elif name.find('right') >= 0:
+                return self.get_right_ee_pos(mujoco_frame)
+        
+        if name.find('ee_quat') >= 0:
+            if name.find('left') >= 0:
+                return self.get_left_ee_rot(mujoco_frame)
+            elif name.find('right') >= 0:
+                return self.get_right_ee_rot(mujoco_frame)
+
+        return super(BaxterMJCEnv, self).get_item_pos(name, mujoco_frame, rot)
+
+
+    def get_item_rot(self, name, mujoco_frame=True, to_euler=False):
+        if name.find('ee_quat') >= 0:
+            if name.find('left') >= 0:
+                rpt = self.get_left_ee_rot(mujoco_frame)
+            elif name.find('right') >= 0:
+                rot = self.get_right_ee_rot(mujoco_frame)
+            if to_euler: rot = T.quaternion_to_euler(rot, order='xyzw')
+            return rot
+        
+        return super(BaxterMJCEnv, self).get_item_rot(name, mujoco_frame, to_euler)
 
     #def get_item_pos(self, name, mujoco_frame=True):
     #    model = self.physics.model
@@ -729,13 +767,19 @@ class BaxterMJCEnv(MJCEnv):
 
 
     def _calc_ik(self, pos, quat, arm, check_limits=True):
-        arm_jnts = self.get_arm_joint_angles()
-        grip_jnts = self.get_gripper_joint_angles()
         lb, ub = self.geom.get_arm_bnds()
         ranges = (np.array(ub) - np.array(lb)).tolist()
         jnt_ids = sorted(self.geom.get_free_inds())
         jnts = P.getJointStates(self.geom.id, jnt_ids)
-        rest_poses = [j[0] for j in jnts]
+        rest_poses = []
+        arm_inds = self.geom.get_arm_inds(arm)
+        arm_jnts = self.geom.jnt_names[arm]
+        cur_jnts = self.get_joints(arm_jnts, vec=True)
+        for ind, jnt_id in enumerate(jnt_ids):
+            if jnt_id in arm_inds:
+                rest_poses.append(cur_jnts[arm_inds.index(jnt_id)])
+            else:
+                rest_poses.append(jnts[ind][0])
         manip_id = self.geom.get_ee_link(arm)
         damp = (0.1 * np.ones(len(jnt_ids))).tolist()
         joint_pos = P.calculateInverseKinematics(self.geom.id,
@@ -815,7 +859,7 @@ class BaxterMJCEnv(MJCEnv):
     #    return jnt_cmd is not None
 
 
-    def step(self, action, mode=None, obs_include=None, view=False, debug=False):
+    def step(self, action, mode=None, obs_include=None, gen_obs=True, view=False, debug=False):
         start_t = time.time()
         if mode is None:
             mode = self.ctrl_mode
@@ -842,10 +886,20 @@ class BaxterMJCEnv(MJCEnv):
             cur_right_ee_rot = self.get_right_ee_rot()
             cur_left_ee_pos = self.get_left_ee_pos()
             cur_left_ee_rot = self.get_left_ee_rot()
-            target_right_ee_pos = cur_right_ee_pos + action[:3]
-            target_right_ee_rot = action[3:7] # cur_right_ee_rot + action[3:7]
-            target_left_ee_pos = cur_left_ee_pos + action[8:11]
-            target_left_ee_rot = action[11:15] # cur_left_ee_rot + action[11:15]
+ 
+            if type(action) is dict:
+                right_ee_cmd, left_ee_cmd = action['right_ee_pos'], action['left_ee_pos']
+                right_ee_rot, left_ee_rot = action['right_ee_rot'], action['left_ee_rot']
+                r_grip, l_grip = action['right_gripper'], action['left_gripper']
+            else:
+                right_ee_cmd, left_ee_cmd = action[:3], action[8:11]
+                right_ee_rot, left_ee_rot = action[3:7], action[11:15]
+                r_grip, l_grip = action[7], action[11]
+
+            target_right_ee_pos = cur_right_ee_pos + right_ee_cmd 
+            target_right_ee_rot = right_ee_rot # cur_right_ee_rot + action[3:7]
+            target_left_ee_pos = cur_left_ee_pos + left_ee_cmd
+            target_left_ee_rot = left_ee_rot # cur_left_ee_rot + action[11:15]
 
             # target_right_ee_rot /= np.linalg.norm(target_right_ee_rot)
             # target_left_ee_rot /= np.linalg.norm(target_left_ee_rot)
@@ -868,9 +922,16 @@ class BaxterMJCEnv(MJCEnv):
             cur_right_ee_pos = self.get_right_ee_pos()
             cur_left_ee_pos = self.get_left_ee_pos()
 
-            target_right_ee_pos = cur_right_ee_pos + action[:3]
+            if type(action) is dict:
+                right_ee_cmd, left_ee_cmd = action.get('right_ee_pos', (0,0,0)), action.get('left_ee_pos', (0,0,0))
+                r_grip, l_grip = action.get('right_gripper', 0), action.get('left_gripper', 0)
+            else:
+                right_ee_cmd, left_ee_cmd = action[:3], action[4:7]
+                r_grip, l_grip = action[3], action[7]
+
+            target_right_ee_pos = cur_right_ee_pos + right_ee_cmd
             target_right_ee_rot = START_EE[3:7]
-            target_left_ee_pos = cur_left_ee_pos + action[4:7]
+            target_left_ee_pos = cur_left_ee_pos + left_ee_cmd
             target_left_ee_rot = START_EE[10:14]
 
 
@@ -884,8 +945,6 @@ class BaxterMJCEnv(MJCEnv):
 
             abs_cmd[:7] = right_cmd
             abs_cmd[9:16] = left_cmd
-            r_grip = action[3]
-            l_grip = action[7]
 
         elif mode == 'discrete_pos':
             if action == 1: return self.move_right_gripper_forward()
@@ -936,6 +995,7 @@ class BaxterMJCEnv(MJCEnv):
                 self.physics.forward()
 
         # self.render(camera_id=1, view=True)
+        if not gen_obs and not view: return
         return self.get_obs(obs_include=obs_include, view=view), \
                self.compute_reward(), \
                self.is_done(), \

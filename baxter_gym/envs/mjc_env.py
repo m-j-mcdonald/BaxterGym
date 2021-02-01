@@ -59,6 +59,9 @@ class MJCEnv(Env):
         self._ind_cache = {}
         self._type_cache = {}
         self._user_data = {}
+        self._cache_rendering = False 
+        self._cached_images = {}
+        self._last_rendered_state = (None, None)
 
         self.im_wid, self.im_height = im_dims
         self.items = items
@@ -218,7 +221,6 @@ class MJCEnv(Env):
     def step(self, action, mode=None, obs_include=None, gen_obs=True, view=False, debug=False):
         for t in range(self.sim_freq):
             cur_state = self.physics.data.qpos.copy()
-            # if np.any(cur_state[-2:] < -0.2): print(cur_state[-2:])
             cur_act = self.get_jnt_vec(self.act_jnts)
             if mode is None or mode == 'position' or mode == 'joint_angle':
                 self.physics.set_control(action)
@@ -339,6 +341,45 @@ class MJCEnv(Env):
         return obs[inds[0]:inds[1]].reshape(self._obs_shape[obs_type])
 
 
+    def get_attr(self, name, attr, mujoco_frame=True):
+        if attr.find('ee_pos') >= 0:
+            name = attr.replace('ee_pos', 'gripper')
+            attr = 'pose'
+        
+        if attr in self.geom.jnt_names:
+            jnts = self._jnt_inds[attr]
+            return self.get_joints(jnts, vec=True)
+        
+        if attr == 'pose' or attr == 'pos':
+            return self.get_item_pos(name, mujoco_frame)
+
+        if attr in ['rot', 'rotation', 'quat', 'euler']:
+            euler = attr == 'euler'
+            return self.get_item_rot(name, mujoco_frame, euler)
+        
+        if hasattr(self, 'get_{}'.format(attr)):
+            return getattr(self, 'get_{}'.format(attr))(name, mujoco_frame=True)
+
+        raise NotImplementedError('Could not retrieve value of {} for {}'.format(attr, name))
+
+
+    def set_attr(self, name, attr, val, mujoco_frame=True, forward=True):
+        if attr in self.geom.jnt_names:
+            jnts = self.geom.jnt_names[attr]
+            return self.set_joints(dict(zip(jnts, val)), forward=forward)
+        
+        if attr == 'pose' or attr == 'pos':
+            return self.set_item_pos(name, val, mujoco_frame, forward=forward)
+
+        if attr in ['rot', 'rotation', 'quat', 'euler']:
+            return self.set_item_rot(name, val, mujoco_frame, forward=forward)
+        
+        if hasattr(self, 'set_{}'.format(attr)):
+            return getattr(self, 'set_{}'.format(attr))(name, val, mujoco_frame, forward=forward)
+
+        raise NotImplementedError('Could not set value of {} for {}'.format(attr, name))
+
+
     def get_pos_from_label(self, label, mujoco_frame=True):
         try:
             pos = self.get_item_pos(label, mujoco_frame)
@@ -376,7 +417,7 @@ class MJCEnv(Env):
                 self._type_cache[name] = 'body'
             except Exception as e:
                 item_ind = -1
-        
+    
         assert not np.any(np.isnan(pos))
         return pos
 
@@ -391,6 +432,7 @@ class MJCEnv(Env):
 
     def set_item_pos(self, name, pos, mujoco_frame=True, forward=True, rot=False):
         item_type = 'joint'
+        if np.any(np.isnan(pos)): return
         if name in self._type_cache:
             item_type = self._type_cache[name]
 
@@ -436,22 +478,33 @@ class MJCEnv(Env):
         self.set_item_pos(name, rot, mujoco_frame, forward, True)
 
 
-    def get_joints(self, jnt_names, sizes=None):
-        vals = {}
-        for i, name in enumerate(jnt_names):
-            ind = self.physics.model.name2id(name, 'joint')
-            adr = self.physics.model.jnt_qposadr[ind]
+    def get_joints(self, jnts, sizes=None, vec=False):
+        if vec:
+            vals = []
+        else:
+            vals = {}
+
+        for i, jnt in enumerate(jnts):
+            if type(jnt) is not int:
+                jnt = self.physics.model.name2id(jnt, 'joint')
+            adr = self.physics.model.jnt_qposadr[jnt]
             size = 1
             if sizes is not None:
                 size = sizes[i]
-            vals[name] = self.physics.data.qpos[adr:adr+size]
+
+            if vec:
+                vals.extend(self.physics.data.qpos[adr:adr+size])
+            else:
+                name = self.physics.model.id2name(jnt, 'joint')
+                vals[name] = self.physics.data.qpos[adr:adr+size]
         return vals
 
 
     def set_joints(self, jnts, forward=True):
-        for name, val in list(jnts.items()):
-            ind = self.physics.model.name2id(name, 'joint')
-            adr = self.physics.model.jnt_qposadr[ind]
+        for jnt, val in list(jnts.items()):
+            if type(jnt) is not int:
+                jnt = self.physics.model.name2id(jnt, 'joint')
+            adr = self.physics.model.jnt_qposadr[jnt]
             offset = 1
             if hasattr(val, '__len__'):
                 offset = len(val)
@@ -589,16 +642,32 @@ class MJCEnv(Env):
 
 
     def render(self, mode='rgb_array', height=0, width=0, camera_id=0,
-               overlays=(), depth=False, scene_option=None, view=False):
+               overlays=(), depth=False, scene_option=None, view=False,
+               forward=False):
         if not self.load_render: return None
         # Make friendly with dm_control or gym interface
         depth = depth or mode == 'depth_array'
         view = view or mode == 'human'
         if height == 0: height = self.im_height
         if width == 0: width = self.im_wid
+        if forward: self.physics.forward()
 
-        self.physics.forward()
-        pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
+        pixels = None
+        if self._cache_rendering:
+            prev_x, prev_q = self._last_rendered_state
+            x_changed = prev_x is None or np.any(np.abs(prev_x - self.physics.data.xpos) > 1e-5)
+            q_changed = prev_q is None or np.any(np.abs(prev_q - self.physics.data.qpos) > 1e-5)
+            if x_changed or q_changed:
+                self._cached_images = {}
+                self._last_rendered_state = (self.physics.data.xpos.copy(), self.physics.data.qpos.copy())
+            elif (camera_id, height, width) in self._cached_images:
+                pixels = self._cached_images[(camera_id, height, width)]
+
+        if pixels is None:
+            pixels = self.physics.render(height, width, camera_id, overlays, depth, scene_option)
+
+            if self._cache_rendering: self._cached_images[(camera_id, height, width)] = pixels
+
         if view and self.use_viewer:
             self._render_viewer(pixels)
 
