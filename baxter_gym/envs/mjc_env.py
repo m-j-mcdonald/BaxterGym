@@ -12,13 +12,6 @@ import xml.etree.ElementTree as xml
 from dm_control.mujoco import Physics, TextOverlay
 from dm_control.mujoco.wrapper.mjbindings import enums
 from dm_control.rl.control import PhysicsError
-from dm_control.viewer import gui
-from dm_control.viewer import renderer
-from dm_control.viewer import runtime
-from dm_control.viewer import user_input
-from dm_control.viewer import util
-from dm_control.viewer import viewer
-from dm_control.viewer import views
 
 from gym import spaces
 from gym.core import Env
@@ -142,6 +135,10 @@ class MJCEnv(Env):
     def _launch_viewer(self, width, height, title='Main'):
         self._matplot_view_thread = None
         if self.use_glew:
+            from dm_control.viewer import viewer
+            from dm_control.viewer import views
+            from dm_control.viewer import gui
+            from dm_control.viewer import renderer
             self._renderer = renderer.NullRenderer()
             self._render_surface = None
             self._viewport = renderer.Viewport(width, height)

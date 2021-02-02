@@ -21,19 +21,11 @@ from tkinter import TclError
 USE_OPENRAVE = False
 import pybullet as P
 
-try:
-    from dm_control import render
-except:
-    from dm_control import _render as render
 from dm_control.mujoco import Physics
 from dm_control.rl.control import PhysicsError
-from dm_control.viewer import gui
-from dm_control.viewer import renderer
 from dm_control.viewer import runtime
 from dm_control.viewer import user_input
 from dm_control.viewer import util
-from dm_control.viewer import viewer
-from dm_control.viewer import views
 
 from gym import spaces
 from gym.core import Env
@@ -870,15 +862,24 @@ class BaxterMJCEnv(MJCEnv):
         r_grip = 0
         l_grip = 0
 
+        cur_left, cur_right = self.get_attr('baxter', 'left'), self.get_attr('baxter', 'right')
         if mode == 'joint_angle':
-            for i in range(len(action)):
-                jnts = self._get_joints(i)
-                for jnt in jnts:
-                    cmd_angle = jnt[1] * action[i]
-                    ind = MUJOCO_JOINT_ORDER.index(jnt[0])
-                    abs_cmd[ind] = cmd_angle
-            r_grip = action[7]
-            l_grip = action[15]
+            if type(action) is dict:
+                left = cur_left + action.get('left', np.zeros(7.))
+                right = cur_right + action.get('right', np.zeros(7.))
+                r_grip = action.get('right_gripper', 0)
+                l_grip = action.get('left_gripper', 0)
+                abs_cmd[:7] = right
+                abs_cmd[9:16] = left
+            else:
+                for i in range(len(action)):
+                    jnts = self._get_joints(i)
+                    for jnt in jnts:
+                        cmd_angle = jnt[1] * action[i]
+                        ind = MUJOCO_JOINT_ORDER.index(jnt[0])
+                        abs_cmd[ind] = cmd_angle
+                r_grip = action[7]
+                l_grip = action[15]
 
         elif mode == 'end_effector':
             # Action Order: ee_right_pos, ee_right_quat, ee_right_grip, ee_left_pos, ee_left_quat, ee_left_grip
@@ -971,7 +972,7 @@ class BaxterMJCEnv(MJCEnv):
 
         for t in range(self.sim_freq): # range(int(1/(4*self.timestep))):
             error = abs_cmd - self.physics.data.qpos[1:19]
-            cmd =  ERROR_COEFF * error
+            cmd = ERROR_COEFF * error
             # cmd[cmd > 0.25] = 0.25
             # cmd[cmd < -0.25] = -0.25
             cmd[7] = OPEN_VAL if r_grip > 0.0165 else CLOSE_VAL
