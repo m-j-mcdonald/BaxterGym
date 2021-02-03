@@ -865,8 +865,8 @@ class BaxterMJCEnv(MJCEnv):
         cur_left, cur_right = self.get_attr('baxter', 'left'), self.get_attr('baxter', 'right')
         if mode == 'joint_angle':
             if type(action) is dict:
-                left = cur_left + action.get('left', np.zeros(7.))
-                right = cur_right + action.get('right', np.zeros(7.))
+                left = cur_left + action.get('left', np.zeros(7))
+                right = cur_right + action.get('right', np.zeros(7))
                 r_grip = action.get('right_gripper', 0)
                 l_grip = action.get('left_gripper', 0)
                 abs_cmd[:7] = right
