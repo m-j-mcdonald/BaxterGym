@@ -114,10 +114,12 @@ def get_item_from_mesh(name, mesh_name, mesh_file=None, pos=(0, 0, 0), quat=(1, 
     return name, xml.fromstring(body), new_assets
 
 
-def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False):
+def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False, add_sensor=False):
     size = ''
+    ex_size = ''
     for d in dims:
         size += "{0} ".format(d)
+        ex_size += "{0} ".format(1.05 * float(d))
 
     color = ''
     for c in rgba:
@@ -128,19 +130,24 @@ def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1
         body = '''
             <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
                 <geom name="{0}" type="{1}" size="{9}" rgba="{10}" {11}/>
+                <site name="{0}_site" type="{1}" size="{12}" rgba="0 0 0 0"/>
             </body>
-           '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass_str)
+           '''.format(name, item_type, pos[0], pos[1], pos[2], quat[0], quat[1], quat[2], quat[3], size, color, mass_str, ex_size)
     else:
         body = '''
                 <body name="free_body_{0}">
                     <freejoint name="{0}"/>
                     <body name="{0}" pos="{2} {3} {4}" quat="{5} {6} {7} {8}">
                         <geom name="{0}" type="{1}" size="{9}" rgba="{10}" {11} friction="1 1 0.01" />
+                        <site name="{0}_site" type="{1}" size="{12}" rgba="0 0 0 0" />
                     </body>
                 </body>
-               '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass_str)
+               '''.format(name, item_type, 0, 0, 0, 1, 0, 0, 0, size, color, mass_str, ex_size)
 
-    return name, xml.fromstring(body), {}
+    tags = {}
+    if add_sensor:
+        tags['sensors'] = ['<sensor name="{0}_touch" site="{0}_site" />'.format(name)]
+    return name, xml.fromstring(body), tags
 
 
 def get_table():
@@ -268,6 +275,9 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
         if 'equality' in tag_dict:
             for eq in tag_dict['equality']:
                 equality.append(eq)
+        if 'sensors' in tag_dict:
+            for sen in tag_dict['sensors']:
+                sensors.append(sen)
 
     for f_name in include_files:
         if f_name.lower().endswith('.mjcf') or f_name.lower().endswith('.xml'):

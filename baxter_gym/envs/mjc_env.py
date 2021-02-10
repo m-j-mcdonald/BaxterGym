@@ -345,7 +345,9 @@ class MJCEnv(Env):
         
         if attr in self.geom.jnt_names:
             jnts = self._jnt_inds[attr]
-            return self.get_joints(jnts, vec=True)
+            bnds = self.geom.get_joint_limits(attr)
+            vals = self.get_joints(jnts, vec=True)
+            return np.maximum(np.minimum(bnds[1], vals), bnds[0])
         
         if attr == 'pose' or attr == 'pos':
             return self.get_item_pos(name, mujoco_frame)
@@ -363,6 +365,7 @@ class MJCEnv(Env):
     def set_attr(self, name, attr, val, mujoco_frame=True, forward=True):
         if attr in self.geom.jnt_names:
             jnts = self.geom.jnt_names[attr]
+            if len(val) == 1: val = [val[0] for _ in jnts]
             return self.set_joints(dict(zip(jnts, val)), forward=forward)
         
         if attr == 'pose' or attr == 'pos':
