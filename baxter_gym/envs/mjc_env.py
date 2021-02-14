@@ -298,8 +298,9 @@ class MJCEnv(Env):
         if self.load_render:
             if view or not len(obs_include) or 'overhead_image' in obs_include:
                 pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=0, view=view)
-                inds = self._obs_inds['overhead_image']
-                obs[inds[0]:inds[1]] = pixels.flatten()
+                if 'overhead_image' in self._obs_inds:
+                    inds = self._obs_inds['overhead_image']
+                    obs[inds[0]:inds[1]] = pixels.flatten()
 
             # if not len(obs_include) or 'forward_image' in obs_include:
             #     pixels = self.render(height=self.im_height, width=self.im_wid, camera_id=1, view=view)

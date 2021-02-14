@@ -114,6 +114,47 @@ def get_item_from_mesh(name, mesh_name, mesh_file=None, pos=(0, 0, 0), quat=(1, 
     return name, xml.fromstring(body), new_assets
 
 
+def get_2d_door(name, handle_dims, door_dims, hinge_pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., add_sensor=False):
+    door_size = ''
+    handle_size = ''
+    ex_size = ''
+    for d in door_dims:
+        door_size += "{0} ".format(d)
+
+    for d in handle_dims:
+        handle_size += "{0} ".format(d)
+        ex_size += "{0} ".format(1.05 * float(d))
+
+    color = ''
+    for c in rgba:
+        color += "{0} ".format(c)
+    mass_str   = 'mass="{0}"'.format(mass) if mass is not None else ''
+    door_pos   = [door_dims[0], 0, 0]
+    handle_pos = [door_dims[0], -door_dims[1]-handle_dims[0]-0.2, 0]
+
+    body = '''
+            <body name="{0}_base" pos="{16} {17} {18}" quat="{12} {13} {14} {15}">
+                <joint name="{0}_hinge" type="hinge" axis="0 0 1" limited="true" range="-1.8708 0" damping="100"/>
+                <body name="{0}_body" pos="{1} {2} {3}">
+                    <geom name="{0}_viz" type="box" size="{4}" rgba="0 0 0 1" mass="0.1" friction="1 1 0.01"/>
+                    <body name="{0}" pos="{5} {6} {7}">
+                        <geom name="{0}" type="cylinder" size="{8}" rgba="0 0 0 1" mass="0.1" friction="1 1 0.01"/>
+                        <site name="{0}_site" type="cylinder" size="{9}" rgba="0 0 0 0" />
+                    </body>
+                </body>
+            </body>
+           '''.format(name, door_pos[0], door_pos[1], door_pos[2], door_size, \
+                            handle_pos[0], handle_pos[1], handle_pos[2], handle_size,
+                            ex_size, color, mass_str, quat[0], quat[1], quat[2], quat[3],
+                            hinge_pos[0], hinge_pos[1], hinge_pos[2])
+
+    tags = {}
+    if add_sensor:
+        tags['sensors'] = ['<sensor name="{0}_touch" site="{0}_site" />'.format(name)]
+    return name, xml.fromstring(body), tags
+
+
+
 def get_item(name, item_type, dims, pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., is_fixed=False, add_sensor=False):
     size = ''
     ex_size = ''
@@ -260,6 +301,11 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
         if item_type == "mesh":
             mesh_name = item_dict["mesh_name"]   
             items.append(get_item_from_mesh(name, mesh_name=mesh_name, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
+        elif "hinge_pos" in item_dict:
+            hinge_pos = item_dict["hinge_pos"]
+            door_dims = item_dict["door_dims"]
+            handle_dims = item_dict["handle_dims"]
+            items.append(get_2d_door(name, handle_dims=handle_dims, door_dims=door_dims, hinge_pos=hinge_pos))
         else:
             dims = item_dict["dimensions"]   
             items.append(get_item(name, item_type=item_type, dims=dims, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
