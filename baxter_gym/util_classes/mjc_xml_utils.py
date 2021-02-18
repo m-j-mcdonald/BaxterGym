@@ -114,7 +114,7 @@ def get_item_from_mesh(name, mesh_name, mesh_file=None, pos=(0, 0, 0), quat=(1, 
     return name, xml.fromstring(body), new_assets
 
 
-def get_2d_door(name, handle_dims, door_dims, hinge_pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., add_sensor=False):
+def get_2d_door(name, handle_dims, door_dims, handle_offset, hinge_pos=(0, 0, 0), quat=(1, 0, 0, 0), rgba=(1, 1, 1, 1), mass=1., add_sensor=False):
     door_size = ''
     handle_size = ''
     ex_size = ''
@@ -130,7 +130,7 @@ def get_2d_door(name, handle_dims, door_dims, hinge_pos=(0, 0, 0), quat=(1, 0, 0
         color += "{0} ".format(c)
     mass_str   = 'mass="{0}"'.format(mass) if mass is not None else ''
     door_pos   = [door_dims[0], 0, 0]
-    handle_pos = [door_dims[0], -door_dims[1]-handle_dims[0]-0.2, 0]
+    handle_pos = [door_dims[0], -door_dims[1]-handle_offset, 0]
 
     body = '''
             <body name="{0}_base" pos="{16} {17} {18}" quat="{12} {13} {14} {15}">
@@ -305,7 +305,8 @@ def generate_xml(base_file, target_file, items=[], include_files=[], include_ite
             hinge_pos = item_dict["hinge_pos"]
             door_dims = item_dict["door_dims"]
             handle_dims = item_dict["handle_dims"]
-            items.append(get_2d_door(name, handle_dims=handle_dims, door_dims=door_dims, hinge_pos=hinge_pos))
+            handle_offset = item_dict["handle_offset"]
+            items.append(get_2d_door(name, handle_offset=handle_offset, handle_dims=handle_dims, door_dims=door_dims, hinge_pos=hinge_pos))
         else:
             dims = item_dict["dimensions"]   
             items.append(get_item(name, item_type=item_type, dims=dims, pos=pos, quat=quat, rgba=rgba, mass=mass, is_fixed=is_fixed))
