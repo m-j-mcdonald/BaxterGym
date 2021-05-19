@@ -228,8 +228,8 @@ class MJCEnv(Env):
             try:
                 self.physics.step()
             except PhysicsError as e:
-                traceback.print_exception(*sys.exc_info())
-                print('\n\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n\n')
+                #traceback.print_exception(*sys.exc_info())
+                print('\nERROR IN PHYSICS SIMULATION; RESETTING ENV.\n')
                 self.physics.reset()
                 self.physics.data.qpos[:] = cur_state[:]
                 self.physics.forward()
@@ -474,7 +474,7 @@ class MJCEnv(Env):
 
     def set_item_rot(self, name, rot, use_euler=False, mujoco_frame=True, forward=True):
         if use_euler or len(rot) == 3:
-            rot = T.euler_to_quaternion(rot)
+            rot = T.euler_to_quaternion(rot, 'wxyz')
 
         self.set_item_pos(name, rot, mujoco_frame, forward, True)
 
