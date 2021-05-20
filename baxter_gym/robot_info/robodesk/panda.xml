@@ -87,15 +87,15 @@
                 <body name="panda0_link5" pos="-0.0825 0.384 0" quat="0.707107 -0.707107 0 0">
                   <joint axis="0 0 1" type="hinge" name="panda0_joint5" range="-2.8973 2.8973" class="panda_forearm"/>
                   <geom type="mesh" class="panda_col" mesh="link5_col" mass="3.00049"/>
-                  <body name="panda0_link6" pos="0 0 0" euler="1.57 0 1.57">
+                  <body name="panda0_link6" pos="0 0 0" quat="0.5 0.5 -0.5 0.5">
                     <joint axis="0 0 1" type="hinge" name="panda0_joint6" range="-1.6573 2.1127" class="panda_forearm"/>
                     <geom type="mesh" class="panda_col" mesh="link6_col" mass="1.3235"/>
-                    <body name="panda0_link7" pos="0.088 0 0" euler="1.57 0 0.7854">
+                    <body name="panda0_link7" pos="0.088 0 0" quat="0.653 0.653 -0.27 0.27">
                       <joint axis="0 0 1" type="hinge" name="panda0_joint7" range="-2.8973 2.8973" class="panda_forearm"/>
                       <geom type="mesh" class="panda_col" mesh="link7_col" mass="0.2"/>
                       <geom type="mesh" pos="0 0 0.107" quat="0.92388 0 0 -0.382683" class="panda_col" mesh="hand_col" mass="0.81909"/>
-                      <body name="right_gripper" pos="0 0 .210" euler="0 0 -0.785398">
-                        <geom type="sphere" name="end_effector_col" pos="0 0 .210" size="0.01" euler="0 0 -0.785398"/>
+                      <body name="right_gripper" pos="0 0 .210" quat="0.92388 0 0 -0.382683">
+                        <geom type="sphere" name="end_effector_col" pos="0 0 0" size="0.01" euler="0 0 0"/>
                       </body>
                       <body name="panda0_leftfinger" pos="0 0 0.1654" quat="0.92388 0 0 -0.382683" childclass="panda_finger">
                         <inertial pos="-1.57863e-05 0.0118731 0.0434103" quat="0.705868 0.0310348 -0.0314925 0.706962" mass="0.0927059" diaginertia="6.57134e-05 6.09611e-05 1.09932e-05"/>
