@@ -49,9 +49,9 @@
       <!-- Slide -->
       <body name="slide" pos="-0.3 0.04 0.935" childclass="desk_drawer">
         <geom type="box" size=".3 .01 .175" pos="0 0 0" rgba="0.8 0.9 0.7 1.0" mass="1"/>
-        <geom type="capsule" size=".014 .042" pos="0 -.065 .08302" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
-        <geom type="capsule" size=".014 .042" pos="0 -.065 -.08302" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
-        <geom type="capsule" size=".014 .08" pos="0 -.11 0" euler="0 0 0" rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .042" pos="0 -.065 .08302" quat="0.707107 0.707107 0. 0." rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .042" pos="0 -.065 -.08302" quat="0.707107 0.707107 0. 0." rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .08" pos="0 -.11 0" quat="1 0 0 0" rgba="0.8 0.9 0.7 1.0"/>
         <site name="slide_handle" type="sphere" size=".01" pos="0 -.11 0"/>
         <joint name="slide_joint" type="slide" pos="0 0 0" axis="1 0 0" limited="true" range="0 .6"/>
       </body>

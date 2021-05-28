@@ -40,7 +40,7 @@
     <body pos="0 0.85 0">
       <!-- Main -->
       <body name="desk" pos="0 0 0" childclass="desk_body">
-        <geom class="desk_wood" type="mesh" mesh="desk_main" euler="-1.57 0 3.14" rgba="2.0 2.0 2.0 1.0"/>
+        <geom class="desk_wood" type="mesh" mesh="desk_main" quat="0. 0. 0.707107 0.707107" rgba="2.0 2.0 2.0 1.0"/>
         <geom type="box" size=".6 .275 .025" pos="0 0 0.735" rgba="0.8 0.9 0.7 1.0" mass="40"/>
         <geom type="box" size="0.17 0.26 .05" pos="0.42 0 0.66" rgba="0.8 0.9 0.7 1.0"/>
         <geom type="box" size="0.17 0.26 .05" pos="-0.42 0 0.66" rgba="0.8 0.9 0.7 1.0"/>
@@ -56,22 +56,22 @@
       </body>
       <!-- Drawer -->
       <body name="drawer" pos="0 0 0.655" childclass="desk_drawer">
-        <geom class="desk_wood" type="mesh" mesh="desk_drawer_wood" euler="-1.57 0 3.14" rgba="0.4 0.4 0.4 1.0"/>
-        <geom name="drawer_handle" class="desk_metal" type="mesh" mesh="desk_drawer_handle" euler="-1.57 0 3.14"/>
+        <geom class="desk_wood" type="mesh" mesh="desk_drawer_wood" quat="0. 0. 0.707107 0.707107" rgba="0.4 0.4 0.4 1.0"/>
+        <geom name="drawer_handle" class="desk_metal" type="mesh" mesh="desk_drawer_handle" quat="0. 0. 0.707107 0.707107"/>
         <geom type="box" size=".24 .26 .01" pos="0 0 -0.04" rgba="1.0 1.0 1.0 1.0" mass="2"/>
         <geom type="box" size=".24 .01 .05" pos="0 .25 0" rgba="0.8 0.9 0.7 1.0"/>
         <geom type="box" size=".24 .01 .05" pos="0 -.25 0" rgba="0.8 0.9 0.7 1.0"/>
         <geom type="box" size=".01 .26 .05" pos="-.23 0 0" rgba="0.8 0.9 0.7 1.0"/>
         <geom type="box" size=".01 .26 .05" pos=".23 0 0" rgba="0.8 0.9 0.7 1.0"/>
-        <geom type="capsule" size=".014 .045" pos=".08203 -.315 .01" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
-        <geom type="capsule" size=".014 .045" pos="-.08203 -.315 .01" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
-        <geom type="capsule" size=".014 .08" pos="0 -.36 .01" euler="0 1.57 0" rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .045" pos=".08203 -.315 .01" quat="0.707107 0.707107 0. 0." rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .045" pos="-.08203 -.315 .01" quat="0.707107 0.707107 0. 0." rgba="0.8 0.9 0.7 1.0"/>
+        <geom type="capsule" size=".014 .08" pos="0 -.36 .01" quat="0.707107 0. 0.707107 0." rgba="0.8 0.9 0.7 1.0"/>
         <joint name="drawer_joint" type="slide" pos="0 0 0" axis="0 1 0" limited="true" range="-0.48 0"/>
       </body>
       <!-- Slide -->
       <body name="slide" pos="-0.3 0.04 0.935" childclass="desk_drawer">
-        <geom class="desk_wood" type="mesh" mesh="desk_slide_wood" euler="-1.57 0 3.14" rgba="0.4 0.4 0.4 1.0"/>
-        <geom name="desk_slide_handle" class="desk_metal" type="mesh" mesh="desk_slide_handle" euler="-1.57 0 3.14"/>
+        <geom class="desk_wood" type="mesh" mesh="desk_slide_wood" quat="0. 0. 0.707107 0.707107" rgba="0.4 0.4 0.4 1.0"/>
+        <geom name="desk_slide_handle" class="desk_metal" type="mesh" mesh="desk_slide_handle" quat="0. 0. 0.707107 0.707107"/>
         <geom type="box" size=".3 .01 .175" pos="0 0 0" rgba="0.8 0.9 0.7 1.0" mass="1"/>
         <geom type="capsule" size=".014 .042" pos="0 -.065 .08302" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
         <geom type="capsule" size=".014 .042" pos="0 -.065 -.08302" euler="1.57 0 0" rgba="0.8 0.9 0.7 1.0"/>
