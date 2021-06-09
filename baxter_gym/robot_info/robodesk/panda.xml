@@ -94,7 +94,7 @@
                       <joint limited="true" axis="0 0 1" type="hinge" name="panda0_joint7" range="-2.91 2.91" class="panda_forearm"/>
                       <geom type="mesh" class="panda_col" mesh="link7_col" mass="0.2"/>
                       <geom type="mesh" pos="0 0 0.107" quat="0.92388 0 0 -0.382683" class="panda_col" mesh="hand_col" mass="0.81909"/>
-                      <body name="right_gripper" pos="0 0 .210" quat="0.92388 0 0 -0.382683">
+                      <body name="right_gripper" pos="0 0 0.200" quat="0.92388 0 0 -0.382683">
                         <geom type="sphere" name="end_effector_col" pos="0 0 0" size="0.01" quat="1 0 0 0"/>
                       </body>
                       <body name="panda0_leftfinger" pos="0 0 0.1654" quat="0.92388 0 0 -0.382683" childclass="panda_finger">
