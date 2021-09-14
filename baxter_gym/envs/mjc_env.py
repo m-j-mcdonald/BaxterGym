@@ -256,13 +256,16 @@ class MJCEnv(Env):
         self.physics.forward()
 
 
+    '''
     def __getstate__(self):
         return self.physics.data.qpos.tolist()
+    '''
 
-
+    '''
     def __setstate__(self, state):
         self.physics.data.qpos[:] = state
         self.physics.forward()
+    '''
 
 
     def _set_obs_info(self, obs_include):
